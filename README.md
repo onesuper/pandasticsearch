@@ -23,10 +23,10 @@ from pandasticsearch.client import SqlClient
 
 client = SqlClient('http://localhost:9200')
 query = client.execute('select * from table_name')
-print query.json
+print(query.json)
 ```
 
-### RestClient (Minimal dependency)
+### RestClient (Minimal Dependency)
 
 A `RestClient` talks to default Elasticsearch Rest API :
 
@@ -34,10 +34,10 @@ A `RestClient` talks to default Elasticsearch Rest API :
 from pandasticsearch.client import RestClient
 client = RestClient('http://localhost:9200', 'recruit/resume/_search')
 query = client.execute("query":{"match_all":{}}})
-print query.json
+print(query.json)
 ```
 
-### Used with Third-party Client
+### Used with Other Python Client
 
 Pandasticsearch can also be used with another full featured Python client:
 
@@ -45,7 +45,7 @@ Pandasticsearch can also be used with another full featured Python client:
 * [pyelasticsearch](https://github.com/pyelasticsearch/pyelasticsearch)
 * [pyes](https://github.com/aparo/pyes)
 
-```
+```python
 from elasticsearch import Elasticsearch
 from pandasticsearch.query import Select
 
@@ -57,21 +57,34 @@ select.explain_result(result_dict)
 df = select.to_pandas()
 ```
 
-## Analyzing Data in ES
+## Analyze Data in ES
+
+### Selection
+
+```python
+>>> client = SqlClient('http://localhost:9200')
+>>> select = client.execute('select a,b from table_name limit 3', query=Select())
+>>> select
+values: [{'a': 1, 'b': 1}, {'a': 2, 'b': 2}, {'a': 3, 'b': 3}]
+>>> df = select.to_pandas()
+>>> df
+   a  b
+0  1  1
+1  2  2
+2  3  3
+```
 
 ### Groupby (Aggregation)
 
-```
+```python
 >>> client = SqlClient('http://localhost:9200')
 >>> agg = client.execute('select COUNT(*) as f from table_name group by agg_key', query=Agg())
 >>> agg
 >>> df = agg.to_pandas()
 >>> df
-[{'f1': 100}, {'f1': 200}]
 index_names: ('agg_key',)
 indexes: [('a',), ('b',)]
 values: [{'f1': 100}, {'f1': 200}]
-
           f1
 agg_key
 a        100
@@ -101,25 +114,9 @@ b        x           NaN  3.0
          y         400.0  NaN
 ```
 
-### Selection
-
-```
->>> client = SqlClient('http://localhost:9200')
->>> select = client.execute('select a,b from table_name limit 3', query=Select())
->>> select
-[{'a': 1, 'b': 1}, {'a': 2, 'b': 2}, {'a': 3, 'b': 3}]
-values: [{'a': 1, 'b': 1}, {'a': 2, 'b': 2}, {'a': 3, 'b': 3}]
->>> df = agg.to_pandas()
->>> df
-   a  b
-0  1  1
-1  2  2
-2  3  3
-```
-
 ## Related Articles
 
-[Spark and Elasticsearch for real-time data analysis](https://spark-summit.org/2015-east/wp-content/uploads/2015/03/SSE15-35-Leau.pdf)
+* [Spark and Elasticsearch for real-time data analysis](https://spark-summit.org/2015-east/wp-content/uploads/2015/03/SSE15-35-Leau.pdf)
 
 
 ## LICENSE
