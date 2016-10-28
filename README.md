@@ -95,7 +95,11 @@ b        200
 
 ```python
 >>> client = SqlClient('http://localhost:9200')
->>> agg = client.execute('select COUNT(*) as f1, AVG(*) as f2 from table_name group by agg_key1, agg_key2', query=Agg())
+>>> agg = client.execute('''
+    select COUNT(*) as f1, AVG(*) as f2
+    from table_name
+    group by agg_key1, agg_key2
+    ''', query=Agg())
 >>> agg
 index_names: ('agg_key1', 'agg_key2')
 indexes: [('a', 'x'), ('a', 'x'), ('a', 'y'), ('a', 'y'), ('b', 'x'), ('b', 'x'), ('b', 'y'), ('b', 'y')]

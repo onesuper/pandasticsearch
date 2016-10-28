@@ -15,7 +15,7 @@ class RestClient(object):
 
     :Example:
     >>> from pandasticsearch.client import RestClient
-    >>> client = RestClient('http://bj2-storm03:9200', 'recruit/resume/_search')
+    >>> client = RestClient('http://localhost:9200', 'index/type/_search')
     >>> query = client.execute("query":{"match_all":{}}})
     >>> print query
     """
