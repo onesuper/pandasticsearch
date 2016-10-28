@@ -1,10 +1,10 @@
 ## Pandasticsearch = Pandas + Elasticsearch
 
-Pandasticsearch is a Elasticsearch client for data-analysis purpose. It interpret the query results into
+Pandasticsearch is an Elasticsearch client for data-analysis purpose. It interprets query results into
  [Pandas](http://pandas.pydata.org) objects for data analysis. This can be used to gain direct insight
-  from the Elasticsearch, e.g. multi-level nested aggregation. Elasticsearch is skilled in real-time indexing, 
-  search and data-analysis. The results returned by Elasticsearch Rest API still require processing before 
-  data scientists can conduct an analysis on. 
+  from Elasticsearch's analysis result, e.g. multi-level nested aggregation. Elasticsearch is skilled 
+  in real-time indexing, search and data-analysis. The results returned by Elasticsearch Rest API still
+  require processing before data scientists can conduct an analysis on. 
 
 To install:
 
@@ -16,7 +16,7 @@ pip3 install pandasticsearch
 
 ### SqlClient (Recommended)
 
-A `SqlClient` talks to [Elasticsearch-SQL](https://github.com/NLPchina/elasticsearch-sql) :
+A `SqlClient` talks to [Elasticsearch-SQL](https://github.com/NLPchina/elasticsearch-sql) (You need to install the plugin first):
 
 ```python
 from pandasticsearch.client import SqlClient
@@ -41,7 +41,7 @@ print(query.json)
 
 Pandasticsearch can also be used with another full featured Python client:
 
-* [elasticsearch-py](https://github.com/elastic/elasticsearch-py)
+* [elasticsearch-py](https://github.com/elastic/elasticsearch-py) (Official)
 * [pyelasticsearch](https://github.com/pyelasticsearch/pyelasticsearch)
 * [pyes](https://github.com/aparo/pyes)
 
