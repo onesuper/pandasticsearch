@@ -111,19 +111,22 @@ class Agg(Query):
 
     def explain_result(self, result=None):
         super(Agg, self).explain_result(result)
-        key, value = list(self._result_dict['aggregations'].items())[0]
-        tuples = list(Agg._process_buckets(key, value))
+        tuples = list(Agg._process_agg(self._result_dict['aggregations']))
         assert len(tuples) > 0
-        self._index_names = tuples[0][0]
+        self._index_names = list(tuples[0][0])
         for t in tuples:
             _, index, row = t
             self.append(row)
-            self._indexes.append(index)
+            if len(index) > 0:
+                self._indexes.append(index)
 
     def to_pandas(self):
         if self._values:
-            index = pandas.MultiIndex.from_tuples(self._indexes, names=self._index_names)
-            df = pandas.DataFrame(data=self._values, index=index)
+            if len(self._index_names) > 0:
+                index = pandas.MultiIndex.from_tuples(self._indexes, names=self._index_names)
+                df = pandas.DataFrame(data=self._values, index=index)
+            else:
+                df = pandas.DataFrame(data=self._values)
             return df
 
     def __repr__(self):
@@ -131,23 +134,23 @@ class Agg(Query):
             self._index_names, self._indexes) + super(Agg, self).__repr__()
 
     @classmethod
-    def _process_buckets(cls, key, value, indexes=(), names=()):
+    def _process_agg(cls, bucket, indexes=(), names=()):
         """
-        Recursively extract bucket values
-        :param key: aggregation key
-        :param value: either a dictionary contains sub-aggregation or a dictionary contains field value
-        :return: a list of tuples: (index_names, indexes, row)
+        Recursively extract agg values
+        :param bucket: a bucket contains either sub-buckets or a bunch of aggregated values
+        :return: a list of tuples: (index_name, index_tuple, row)
         """
-        for bucket in value['buckets']:
-            row = {}
-            for k, v in bucket.items():
-                if isinstance(v, dict):
-                    if 'buckets' in v:
-                        for x in Agg._process_buckets(k, v, indexes + (bucket['key'],), names + (key,)):
-                            yield x
-                    elif 'value' in v:
-                        row[k] = v['value']
-                    else:
-                        pass
-            if len(row) > 0:
-                yield (names + (key,), indexes + (bucket['key'],), row)
+        # for each agg, yield a row
+        row = {}
+        for k, v in bucket.items():
+            if 'buckets' in v:
+                for sub_bucket in v['buckets']:
+                    for x in Agg._process_agg(sub_bucket, indexes + (sub_bucket['key'],), names + (k,)):
+                        yield x
+            elif 'value' in v:
+                row[k] = v['value']
+            else:
+                pass
+        if len(row) > 0:
+            yield (names, indexes, row)
+

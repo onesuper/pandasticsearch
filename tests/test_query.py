@@ -24,7 +24,24 @@ class TestQuery(unittest.TestCase):
         assert select.result is not None
         assert len(select) == 3
 
-    def test_agg(self):
+    def test_agg_no_buckets(self):
+        agg = Agg()
+        agg._result_dict = {
+            'aggregations': {
+                'f1': {'value': 100},
+                'f2': {'value': 200},
+            }
+        }
+
+        agg.explain_result()
+        print(agg)
+        print(repr(agg))
+        print(agg.to_pandas())
+
+        assert agg.result is not None
+        assert len(agg) == 1
+
+    def test_agg_buckets(self):
         agg = Agg()
         agg._result_dict = {
             'aggregations': {
@@ -32,10 +49,14 @@ class TestQuery(unittest.TestCase):
                     'buckets': [
                         {
                             'key': 'a',
-                            'f1': {'value': 100}},
+                            'f1': {'value': 100},
+                            'f2': {'value': 1}
+                        },
                         {
                             'key': 'b',
-                            'f1': {'value': 200}},
+                            'f1': {'value': 200},
+                            'f2': {'value': 2}
+                        },
                     ]
                 }
             }
@@ -49,7 +70,7 @@ class TestQuery(unittest.TestCase):
         assert agg.result is not None
         assert len(agg) == 2
 
-    def test_agg_recursive(self):
+    def test_agg_nested_buckets(self):
         agg = Agg()
         agg._result_dict = {
             'aggregations': {
