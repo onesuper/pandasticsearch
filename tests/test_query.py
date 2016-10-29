@@ -99,7 +99,7 @@ class TestQuery(unittest.TestCase):
         print(repr(agg))
         print(agg.to_pandas())
         assert agg.result is not None
-        assert len(agg) == 8
+        assert len(agg) == 4
 
 
 if __name__ == '__main__':

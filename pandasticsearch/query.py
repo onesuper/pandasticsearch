@@ -116,8 +116,8 @@ class Agg(Query):
         assert len(tuples) > 0
         self._index_names = tuples[0][0]
         for t in tuples:
-            _, index, col_name, val = t
-            self.append({col_name: val})
+            _, index, row = t
+            self.append(row)
             self._indexes.append(index)
 
     def to_pandas(self):
@@ -136,15 +136,18 @@ class Agg(Query):
         Recursively extract bucket values
         :param key: aggregation key
         :param value: either a dictionary contains sub-aggregation or a dictionary contains field value
-        :return: a list of tuples: (index_names, indexes, field_name, field_value)
+        :return: a list of tuples: (index_names, indexes, row)
         """
         for bucket in value['buckets']:
+            row = {}
             for k, v in bucket.items():
                 if isinstance(v, dict):
-                    if 'value' in v:
-                        yield (names + (key,), indexes + (bucket['key'],), k, v['value'])
-                    else:
+                    if 'buckets' in v:
                         for x in Agg._process_buckets(k, v, indexes + (bucket['key'],), names + (key,)):
                             yield x
-                else:
-                    pass
+                    elif 'value' in v:
+                        row[k] = v['value']
+                    else:
+                        pass
+            if len(row) > 0:
+                yield (names + (key,), indexes + (bucket['key'],), row)

@@ -102,20 +102,16 @@ b        200
     ''', query=Agg())
 >>> agg
 index_names: ('agg_key1', 'agg_key2')
-indexes: [('a', 'x'), ('a', 'x'), ('a', 'y'), ('a', 'y'), ('b', 'x'), ('b', 'x'), ('b', 'y'), ('b', 'y')]
-values: [{'f2': 1}, {'f1': 100}, {'f2': 2}, {'f1': 200}, {'f2': 3}, {'f1': 300}, {'f2': 4}, {'f1': 400}]
+indexes: [('a', 'x'), ('a', 'y'), ('b', 'x'), ('b', 'y')]
+values: [{'f2': 1, 'f1': 100}, {'f2': 2, 'f1': 200}, {'f2': 3, 'f1': 300}, {'f2': 4, 'f1': 400}]
 >>> df = agg.to_pandas()
 >>> df
-                      f1   f2
+                    f1  f2
 agg_key1 agg_key2
-a        x           NaN  1.0
-         x         100.0  NaN
-         y           NaN  2.0
-         y         200.0  NaN
-b        x           NaN  3.0
-         x         300.0  NaN
-         y           NaN  4.0
-         y         400.0  NaN
+a        x         100   1
+         y         200   2
+b        x         300   3
+         y         400   4
 ```
 
 ## Related Articles
