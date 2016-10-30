@@ -122,7 +122,7 @@ class Agg(Query):
 
     def to_pandas(self):
         if self._values:
-            if len(self._index_names) > 0:
+            if len(self._indexes) > 0:
                 index = pandas.MultiIndex.from_tuples(self._indexes, names=self._index_names)
                 df = pandas.DataFrame(data=self._values, index=index)
             else:
@@ -130,8 +130,11 @@ class Agg(Query):
             return df
 
     def __repr__(self):
-        return 'index_names: {0}\nindexes: {1}\n'.format(
-            self._index_names, self._indexes) + super(Agg, self).__repr__()
+        if len(self._indexes) > 0:
+            return 'index_names: {0}\nindexes: {1}\n'.format(
+                self._index_names, self._indexes) + super(Agg, self).__repr__()
+        else:
+            return super(Agg, self).__repr__()
 
     @classmethod
     def _process_agg(cls, bucket, indexes=(), names=()):
@@ -149,6 +152,8 @@ class Agg(Query):
                         yield x
             elif 'value' in v:
                 row[k] = v['value']
+            elif 'values' in v:  # percentiles
+                row = v['values']
             else:
                 pass
         if len(row) > 0:

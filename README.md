@@ -1,6 +1,6 @@
 ## Pandasticsearch = Pandas + Elasticsearch
 
-Pandasticsearch is an Elasticsearch client for data-analysis purpose. It interprets query results into
+Pandasticsearch is a lightweight Elasticsearch client for data-analysis purpose. It interprets query results into
  [Pandas](http://pandas.pydata.org) objects for data analysis. This can be used to gain direct insight
   from Elasticsearch's analysis result, e.g. multi-level nested aggregation. Elasticsearch is skilled 
   in real-time indexing, search and data-analysis. The results returned by Elasticsearch Rest API still
@@ -13,6 +13,45 @@ pip3 install pandasticsearch
 ```
 
 ## Connect to ES
+
+### High Level API (Experimental)
+
+A `Pandasticsearch` object comes with a bunch of high level APIs out of box:
+
+```python
+>>> from pandasticsearch import Pandasticsearch
+>>> ps = Pandasticsearch('http://localhost:9200', index='company')
+
+# top
+>>> ps.top(3)
+...
+... 
+...
+
+# value count
+>>> ps.value_count('age')
+>>> _.to_pandas()
+   value_count(name)
+0              1501780
+
+# distinct count 
+>>> ps.distinct_count('name')
+>>> _.to_pandas()
+   value_count(name)
+0             771665
+
+# percentiles
+>>> ps.percentiles('birthYear', percents=[25,50,75])
+>>> _.to_pandas()
+     25.0    50.0    75.0
+0  1983.0  1989.0  1993.0
+
+# percentile ranks
+>>> ps.percentiles('birthYear', values=[1990,1985])
+>>> _.to_pandas()
+      1985.0     1990.0
+0  31.678808  56.836569
+```
 
 ### SqlClient (Recommended)
 
@@ -32,6 +71,7 @@ A `RestClient` talks to default Elasticsearch Rest API :
 
 ```python
 from pandasticsearch.client import RestClient
+
 client = RestClient('http://localhost:9200', 'recruit/resume/_search')
 query = client.execute("query":{"match_all":{}}})
 print(query.json)
