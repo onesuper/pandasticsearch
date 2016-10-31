@@ -23,13 +23,13 @@ A `Pandasticsearch` object comes with a bunch of high level APIs out of box:
 >>> ps = Pandasticsearch('http://localhost:9200', index='company')
 
 # filter & top
->>> ps.where(col('birthYear')==1990).top()
+>>> ps.where(col('birthYear') == 1990).top()
 ...
 ... 
 ...
 
 # filter & aggregation
->>> ps.where(col('department') == 'finance').aggregate(max('birthYear'))
+>>> ps.where(col('department') == 'finance').aggregate(avg('birthYear'))
 >>> _.to_pandas()
    avg(birthYear)
 0     1986.227061
