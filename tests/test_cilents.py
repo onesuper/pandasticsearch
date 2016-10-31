@@ -5,8 +5,8 @@ from mock import patch, Mock
 from pandasticsearch.clients import SqlClient, RestClient
 
 
-class TestClient(unittest.TestCase):
-    @patch('pandasticsearch.client.urllib.request.urlopen')
+class TestClients(unittest.TestCase):
+    @patch('pandasticsearch.clients.urllib.request.urlopen')
     def test_sql_client_returns_results(self, mock_urlopen):
         response = Mock()
         response.read.return_value = """{"hits" : {"hits": [{"_source": {}}] }}""".encode("utf-8")
@@ -15,11 +15,16 @@ class TestClient(unittest.TestCase):
         client = SqlClient("http://localhost:9200")
 
         query = client.execute("xxxx")
-        assert query is not None
-        assert query.json is not None
-        assert query.result is None
 
-    @patch('pandasticsearch.client.urllib.request.urlopen')
+        print(query)
+        print(query.json)
+        print(query.result)
+
+        self.assertIsNotNone(query)
+        self.assertIsNotNone(query.json)
+        self.assertIsNone(query.result)
+
+    @patch('pandasticsearch.clients.urllib.request.urlopen')
     def test_rest_client_returns_results(self, mock_urlopen):
         response = Mock()
         response.read.return_value = """{"hits" : {"hits": [{"_source": {}}] }}""".encode("utf-8")
@@ -28,9 +33,15 @@ class TestClient(unittest.TestCase):
         client = RestClient("http://localhost:9200")
 
         query = client.execute("xxxx")
-        assert query is not None
-        assert query.json is not None
-        assert query.result is None
+
+        print(query)
+        print(query.json)
+        print(query.result)
+
+        self.assertIsNotNone(query)
+        self.assertIsNotNone(query.json)
+        self.assertIsNone(query.result)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -6,7 +6,7 @@ from pandasticsearch.api import Pandasticsearch
 
 
 class TestAPI(unittest.TestCase):
-    @patch('pandasticsearch.client.urllib.request.urlopen')
+    @patch('pandasticsearch.clients.urllib.request.urlopen')
     def test_pandasticsearch_top(self, mock_urlopen):
         response = Mock()
         response.read.return_value = """{"hits" : {"hits": [{"_source": {}}] }}""".encode("utf-8")
@@ -15,7 +15,7 @@ class TestAPI(unittest.TestCase):
 
         top = ps.top()
         print(repr(top))
-        assert repr(top) == 'values: [{}]'
+        self.assertEqual(repr(top), 'values: [{}]')
 
 
 if __name__ == '__main__':

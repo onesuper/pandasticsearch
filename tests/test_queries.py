@@ -4,7 +4,7 @@ import unittest
 from pandasticsearch.queries import Select, Agg
 
 
-class TestQuery(unittest.TestCase):
+class TestQueries(unittest.TestCase):
     def test_select(self):
         select = Select()
         select._result_dict = {
@@ -21,8 +21,8 @@ class TestQuery(unittest.TestCase):
         print(repr(select))
         print(select.to_pandas())
 
-        assert select.result is not None
-        assert len(select) == 3
+        self.assertIsNotNone(select.result)
+        self.assertEqual(len(select), 3)
 
     def test_agg_no_buckets(self):
         agg = Agg()
@@ -38,8 +38,8 @@ class TestQuery(unittest.TestCase):
         print(repr(agg))
         print(agg.to_pandas())
 
-        assert agg.result is not None
-        assert len(agg) == 1
+        self.assertIsNotNone(agg.result)
+        self.assertEqual(len(agg), 1)
 
     def test_agg_buckets(self):
         agg = Agg()
@@ -67,8 +67,8 @@ class TestQuery(unittest.TestCase):
         print(repr(agg))
         print(agg.to_pandas())
 
-        assert agg.result is not None
-        assert len(agg) == 2
+        self.assertIsNotNone(agg.result)
+        self.assertEqual(len(agg), 2)
 
     def test_agg_nested_buckets(self):
         agg = Agg()
@@ -119,8 +119,8 @@ class TestQuery(unittest.TestCase):
         print(agg)
         print(repr(agg))
         print(agg.to_pandas())
-        assert agg.result is not None
-        assert len(agg) == 4
+        self.assertIsNotNone(agg.result)
+        self.assertEqual(len(agg), 4)
 
 
 if __name__ == '__main__':
