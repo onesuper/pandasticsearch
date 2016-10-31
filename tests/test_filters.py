@@ -6,16 +6,16 @@ from pandasticsearch.filters import *
 
 class TestFilters(unittest.TestCase):
     def test_leaves(self):
-        self.assertEqual((Dim('a') >= 2).subtree, {"range": {"a": {"gte": 2}}})
-        self.assertEqual((Dim('a') <= 2).subtree, {"range": {"a": {"lte": 2}}})
-        self.assertEqual((Dim('a') < 2).subtree, {"range": {"a": {"lt": 2}}})
-        self.assertEqual((Dim('a') == 2).subtree, {"term": {"a": 2}})
-        self.assertEqual((Dim('a') != 2).subtree, {"must_not": {"term": {"a": 2}}})
-        self.assertEqual((Dim('a') > 2).subtree, {"range": {"a": {"gt": 2}}})
+        self.assertEqual((Dim('a') >= 2).build(), {"range": {"a": {"gte": 2}}})
+        self.assertEqual((Dim('a') <= 2).build(), {"range": {"a": {"lte": 2}}})
+        self.assertEqual((Dim('a') < 2).build(), {"range": {"a": {"lt": 2}}})
+        self.assertEqual((Dim('a') == 2).build(), {"term": {"a": 2}})
+        self.assertEqual((Dim('a') != 2).build()['bool'], {"must_not": {"term": {"a": 2}}})
+        self.assertEqual((Dim('a') > 2).build(), {"range": {"a": {"gt": 2}}})
 
     def test_and(self):
         self.assertEqual(
-            ((Dim('a') >= 2) & (Dim('b') < 3)).subtree,
+            ((Dim('a') >= 2) & (Dim('b') < 3)).build()['bool'],
             {
                 'must': [
                     {'range': {'a': {'gte': 2}}},
@@ -23,7 +23,7 @@ class TestFilters(unittest.TestCase):
             })
 
         self.assertEqual(
-            ((Dim('a') >= 2) & (Dim('b') < 3) & (Dim('c') == 4)).subtree,
+            ((Dim('a') >= 2) & (Dim('b') < 3) & (Dim('c') == 4)).build()['bool'],
             {
                 'must': [
                     {'range': {'a': {'gte': 2}}},
@@ -32,7 +32,7 @@ class TestFilters(unittest.TestCase):
             })
 
         self.assertEqual(
-            ((Dim('a') >= 2) & ((Dim('b') < 3) & (Dim('c') == 4))).subtree,
+            ((Dim('a') >= 2) & ((Dim('b') < 3) & (Dim('c') == 4))).build()['bool'],
             {
                 'must': [
                     {'range': {'b': {'lt': 3}}},
@@ -42,7 +42,7 @@ class TestFilters(unittest.TestCase):
 
     def test_or(self):
         self.assertEqual(
-            ((Dim('a') >= 2) | (Dim('b') < 3)).subtree,
+            ((Dim('a') >= 2) | (Dim('b') < 3)).build()['bool'],
             {
                 'should': [
                     {'range': {'a': {'gte': 2}}},
@@ -50,7 +50,7 @@ class TestFilters(unittest.TestCase):
             })
 
         self.assertEqual(
-            ((Dim('a') >= 2) | (Dim('b') < 3) | (Dim('c') == 4)).subtree,
+            ((Dim('a') >= 2) | (Dim('b') < 3) | (Dim('c') == 4)).build()['bool'],
             {
                 'should': [
                     {'range': {'a': {'gte': 2}}},
@@ -59,7 +59,7 @@ class TestFilters(unittest.TestCase):
             })
 
         self.assertEqual(
-            ((Dim('a') >= 2) | ((Dim('b') < 3) | (Dim('c') == 4))).subtree,
+            ((Dim('a') >= 2) | ((Dim('b') < 3) | (Dim('c') == 4))).build()['bool'],
             {
                 'should': [
                     {'range': {'b': {'lt': 3}}},
@@ -69,17 +69,17 @@ class TestFilters(unittest.TestCase):
 
     def test_not(self):
         self.assertEqual(
-            (~(Dim('a') >= 2)).subtree,
+            (~(Dim('a') >= 2)).build()['bool'],
             {
                 'must_not':
                     {'range': {'a': {'gte': 2}}}})
 
     def test_not_not(self):
         exp = Dim('a') >= 2
-        print((~exp).subtree)
-        print((~~exp).subtree)
+        print((~exp).build())
+        print((~~exp).build())
         self.assertEqual(
-            (~~exp).subtree,
+            (~~exp).build()['bool'],
             {
                 'must_not': {
                     'bool': {
@@ -89,7 +89,7 @@ class TestFilters(unittest.TestCase):
     def test_not_and(self):
         exp = (Dim('a') >= 2) & (Dim('b') < 3)
         self.assertEqual(
-            (~exp).subtree,
+            (~exp).build()['bool'],
             {
                 'must_not': {
                     'bool': {
@@ -106,7 +106,7 @@ class TestFilters(unittest.TestCase):
         print(actual.debug_string())
 
         self.assertEqual(
-            actual.subtree,
+            actual.build()['bool'],
             {
                 'must': [
                     {'range': {'a': {'gte': 2}}},
