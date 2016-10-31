@@ -19,14 +19,20 @@ pip3 install pandasticsearch
 A `Pandasticsearch` object comes with a bunch of high level APIs out of box:
 
 ```python
->>> from pandasticsearch import Pandasticsearch
+>>> from pandasticsearch import Pandasticsearch, col, max
 >>> ps = Pandasticsearch('http://localhost:9200', index='company')
 
-# top
->>> ps.top(3)
+# filter & top
+>>> ps.where(col('birthYear')==1990).top()
 ...
 ... 
 ...
+
+# filter & aggregation
+>>> ps.where(col('department') == 'finance').aggregate(max('birthYear'))
+>>> _.to_pandas()
+   avg(birthYear)
+0     1986.227061
 
 # value count
 >>> ps.value_count('age')

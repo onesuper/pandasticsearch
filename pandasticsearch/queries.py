@@ -68,9 +68,6 @@ class Query(collections.MutableSequence):
     def append(self, value):
         self._values.append(value)
 
-    def __repr__(self):
-        return 'values: {0}'.format(self._values)
-
     def __str__(self):
         return str(self._values)
 
@@ -128,13 +125,6 @@ class Agg(Query):
             else:
                 df = pandas.DataFrame(data=self._values)
             return df
-
-    def __repr__(self):
-        if len(self._indexes) > 0:
-            return 'index_names: {0}\nindexes: {1}\n'.format(
-                self._index_names, self._indexes) + super(Agg, self).__repr__()
-        else:
-            return super(Agg, self).__repr__()
 
     @classmethod
     def _process_agg(cls, bucket, indexes=(), names=()):

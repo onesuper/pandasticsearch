@@ -1,7 +1,9 @@
 from pandasticsearch.clients import RestClient
 from pandasticsearch.queries import Agg, Select
+from pandasticsearch.filters import Filter
+from pandasticsearch.utils.metric import metric_agg
 
-matchall_query = {"query": {"match_all": {}}}
+import json
 
 
 class Pandasticsearch(object):
@@ -11,11 +13,37 @@ class Pandasticsearch(object):
         else:
             endpoint = index + '/' + type + '/_search'
         self._client = RestClient(url, endpoint)
+        self._filter = None
+        self._last_query = None
+
+    def where(self, filter=None):
+        assert isinstance(filter, Filter)
+        self._filter = filter.build()
+        return self
 
     def top(self, size=10):
-        dic = matchall_query.copy()
-        dic['size'] = size
-        return self._client.execute(dic, Select())
+        self._last_query = Pandasticsearch._build_query(filter=self._filter, size=size)
+        return self._client.execute(self._last_query, Select())
+
+    def aggregate(self, agg_func):
+        self._last_query = Pandasticsearch._build_query(agg=agg_func, filter=self._filter, size=0)
+        return self._client.execute(self._last_query, Agg())
+
+    @staticmethod
+    def _build_query(agg=None, filter=None, size=None):
+        query = {}
+        if agg is not None:
+            query['aggs'] = agg
+        if size is not None:
+            query['size'] = size
+        if filter is not None:
+            query['query'] = {'filtered': {'filter': filter}}
+        else:
+            query['query'] = {"match_all": {}}
+        return query
+
+    def debug_string(self, indent=4):
+        return json.dumps(self._last_query, indent=indent)
 
     def distinct_count(self, field):
         """
@@ -24,7 +52,9 @@ class Pandasticsearch(object):
         :return: an Agg object containing the aggregated value
         :rtype: Agg
         """
-        return self._client.execute(Pandasticsearch._metric_agg_query('cardinality', field), Agg())
+        agg = metric_agg('cardinality', field)
+        self._last_query = Pandasticsearch._build_query(agg=agg, filter=self._filter, size=0)
+        return self._client.execute(self._last_query, Agg())
 
     def value_count(self, field):
         """
@@ -33,7 +63,9 @@ class Pandasticsearch(object):
         :return: an Agg object containing the aggregated value
         :rtype: Agg
         """
-        return self._client.execute(Pandasticsearch._metric_agg_query('value_count', field), Agg())
+        agg = metric_agg('value_count', field)
+        self._last_query = Pandasticsearch._build_query(agg, filter=self._filter, size=0)
+        return self._client.execute(self._last_query, Agg())
 
     def percentiles(self, field, percents=None):
         """
@@ -42,8 +74,9 @@ class Pandasticsearch(object):
         :return: an Agg object containing the aggregated value
         :rtype: Agg
         """
-        return self._client.execute(
-            Pandasticsearch._metric_agg_query('percentiles', field, params={'percents': percents}), Agg())
+        agg = metric_agg('percentiles', field, params={'percents': percents})
+        self._last_query = Pandasticsearch._build_query(agg=agg, filter=self._filter, size=0)
+        return self._client.execute(self._last_query, Agg())
 
     def percentile_ranks(self, field, values=None):
         """
@@ -52,24 +85,6 @@ class Pandasticsearch(object):
         :return: an Agg object containing the aggregated value
         :rtype: Agg
         """
-        return self._client.execute(
-            Pandasticsearch._metric_agg_query('percentile_ranks', field, params={'values': values}), Agg())
-
-    @classmethod
-    def _metric_agg_query(cls, agg_type, field, rename=None, params=None):
-        if agg_type in ('value_count', 'cardinality', 'percentiles', 'percentile_ranks'):
-            pass
-        else:
-            raise NotImplementedError('type={0} is not supported for metric agg'.format(agg_type))
-
-        if rename is None:
-            rename = '{0}({1})'.format(agg_type, field)
-
-        agg_field = dict()
-        agg_field['field'] = field
-        if params is not None:
-            agg_field.update(params)
-
-        dic = {'size': 0, 'aggs': {rename: {agg_type: agg_field}}}
-        print(dic)
-        return dic
+        agg = metric_agg('percentile_ranks', field, params={'values': values})
+        self._last_query = Pandasticsearch._build_query(agg=agg, filter=self._filter, size=0)
+        return self._client.execute(self._last_query, Agg())
