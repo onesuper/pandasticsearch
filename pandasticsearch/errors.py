@@ -3,7 +3,7 @@ class PandasticSearchException(RuntimeError):
         super(PandasticSearchException, self).__init__(msg)
 
 
-class NoSuchDependency(PandasticSearchException):
+class NoSuchDependencyException(PandasticSearchException):
     pass
 
 

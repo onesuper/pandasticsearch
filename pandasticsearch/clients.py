@@ -3,7 +3,7 @@ import sys
 from six.moves import urllib
 
 from pandasticsearch.queries import Query
-from pandasticsearch.exc import ServerDefinedException
+from pandasticsearch.errors import ServerDefinedException
 
 
 class RestClient(object):

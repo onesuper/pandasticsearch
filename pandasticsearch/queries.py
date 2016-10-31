@@ -2,7 +2,7 @@ import collections
 import json
 import pandas
 
-from pandasticsearch.exc import NoSuchDependency, ParseResultException
+from pandasticsearch.errors import NoSuchDependencyException
 
 
 class Query(collections.MutableSequence):
@@ -47,7 +47,7 @@ class Query(collections.MutableSequence):
                                   ensure_ascii=False)
             return highlight(indented, lexers.JsonLexer(), formatters.TerminalFormatter())
         except ImportError:
-            raise NoSuchDependency('pretty() method requires pygements package')
+            raise NoSuchDependencyException('pretty() method requires pygements package')
 
     @property
     def result(self):
