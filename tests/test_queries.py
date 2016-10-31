@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import unittest
 
-from pandasticsearch.query import Select, Agg
+from pandasticsearch.queries import Select, Agg
 
 
 class TestQuery(unittest.TestCase):

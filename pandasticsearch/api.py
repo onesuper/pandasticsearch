@@ -1,5 +1,5 @@
-from pandasticsearch.client import RestClient
-from pandasticsearch.query import Agg, Select
+from pandasticsearch.clients import RestClient
+from pandasticsearch.queries import Agg, Select
 
 matchall_query = {"query": {"match_all": {}}}
 

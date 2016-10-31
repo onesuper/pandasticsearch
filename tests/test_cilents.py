@@ -2,7 +2,7 @@
 import unittest
 from mock import patch, Mock
 
-from pandasticsearch.client import SqlClient, RestClient
+from pandasticsearch.clients import SqlClient, RestClient
 
 
 class TestClient(unittest.TestCase):

@@ -47,7 +47,7 @@ A `Pandasticsearch` object comes with a bunch of high level APIs out of box:
 0  1983.0  1989.0  1993.0
 
 # percentile ranks
->>> ps.percentiles('birthYear', values=[1990,1985])
+>>> ps.percentile_ranks('birthYear', values=[1990,1985])
 >>> _.to_pandas()
       1985.0     1990.0
 0  31.678808  56.836569
