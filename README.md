@@ -23,14 +23,14 @@ A `Pandasticsearch` object comes with a bunch of high level APIs out of box:
 >>> from pandasticsearch import Pandasticsearch
 >>> ps = Pandasticsearch('http://localhost:9200', index='company')
 
-# filter & top
+# filter + top
 >>> from pandasticsearch import col
 >>> ps.where(col('birthYear') == 1990).top()
 ...
 ... 
 ...
 
-# filter & aggregation
+# filter + aggregation
 >>> from pandasticsearch.aggregators import Avg
 >>> ps.where(col('department') == 'finance').aggregate(Avg('birthYear'))
 >>> _.to_pandas()
@@ -101,33 +101,30 @@ values: [{'a': 1, 'b': 1}, {'a': 2, 'b': 2}, {'a': 3, 'b': 3}]
 
 ### Metric Aggregation
 
-```
+```python
 >>> from pandasticsearch import Pandasticsearch
+>>> from pandasticsearch.aggregators import *
 >>> ps = Pandasticsearch('http://localhost:9200', index='company')
 
 # count documents/values
->>> from pandasticsearch.aggregators import CountStar, ValueCount
 >>> ps.aggregate(ValueCount('age'), CountStar())
 >>> _.to_pandas()
-   count(*)  value_count(birthYear)
+   count(*)  value_count(age)
 0   1168604                 1167497
 
 # distinct counts
->>> from pandasticsearch.aggregators import Cardinality
 >>> ps.aggregate(Cardinality('name'))
 >>> _.to_pandas()
    cardinality(name)
 0             771665
 
 # percentiles
->>> from pandasticsearch.aggregators import Percentiles
 >>> ps.aggregate(Percentiles('birthYear', percents=[25,50,75]))
 >>> _.to_pandas()
      25.0    50.0    75.0
 0  1983.0  1989.0  1993.0
 
 # percentile ranks
->>> from pandasticsearch.aggregators import PercentileRanks
 >>> ps.aggregate(PercentileRanks('birthYear', values=[1990,1985]))
 >>> _.to_pandas()
       1985.0     1990.0
