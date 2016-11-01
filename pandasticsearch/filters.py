@@ -102,27 +102,3 @@ class IsIn(Filter):
         self._filter = {'terms': {dim: value}}
 
 
-class Dim(object):
-    def __init__(self, dim):
-        self._dim = dim
-
-    def __eq__(self, other):
-        return Equal(dim=self._dim, value=other)
-
-    def __ne__(self, other):
-        return ~Equal(dim=self._dim, value=other)
-
-    def __gt__(self, other):
-        return Greater(dim=self._dim, value=other)
-
-    def __lt__(self, other):
-        return Less(dim=self._dim, value=other)
-
-    def __ge__(self, other):
-        return GreaterEqual(dim=self._dim, value=other)
-
-    def __le__(self, other):
-        return LessEqual(dim=self._dim, value=other)
-
-    def isin(self, other):
-        return IsIn(dim=self._dim, value=other)

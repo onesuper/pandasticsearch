@@ -6,16 +6,17 @@ from pandasticsearch.filters import *
 
 class TestFilters(unittest.TestCase):
     def test_leaves(self):
-        self.assertEqual((Dim('a') >= 2).build(), {"range": {"a": {"gte": 2}}})
-        self.assertEqual((Dim('a') <= 2).build(), {"range": {"a": {"lte": 2}}})
-        self.assertEqual((Dim('a') < 2).build(), {"range": {"a": {"lt": 2}}})
-        self.assertEqual((Dim('a') == 2).build(), {"term": {"a": 2}})
-        self.assertEqual((Dim('a') != 2).build()['bool'], {"must_not": {"term": {"a": 2}}})
-        self.assertEqual((Dim('a') > 2).build(), {"range": {"a": {"gt": 2}}})
+        self.assertEqual(GreaterEqual('a', 2).build(), {"range": {"a": {"gte": 2}}})
+        self.assertEqual(LessEqual('a', 2).build(), {"range": {"a": {"lte": 2}}})
+        self.assertEqual(Less('a', 2).build(), {"range": {"a": {"lt": 2}}})
+        self.assertEqual(Equal('a', 2).build(), {"term": {"a": 2}})
+        exp = Equal('a', 2)
+        self.assertEqual((~exp).build()['bool'], {"must_not": {"term": {"a": 2}}})
+        self.assertEqual(Greater('a', 2).build(), {"range": {"a": {"gt": 2}}})
 
     def test_and(self):
         self.assertEqual(
-            ((Dim('a') >= 2) & (Dim('b') < 3)).build()['bool'],
+            (GreaterEqual('a', 2) & Less('b', 3)).build()['bool'],
             {
                 'must': [
                     {'range': {'a': {'gte': 2}}},
@@ -23,7 +24,7 @@ class TestFilters(unittest.TestCase):
             })
 
         self.assertEqual(
-            ((Dim('a') >= 2) & (Dim('b') < 3) & (Dim('c') == 4)).build()['bool'],
+            (GreaterEqual('a', 2) & Less('b', 3) & Equal('c', 4)).build()['bool'],
             {
                 'must': [
                     {'range': {'a': {'gte': 2}}},
@@ -32,7 +33,7 @@ class TestFilters(unittest.TestCase):
             })
 
         self.assertEqual(
-            ((Dim('a') >= 2) & ((Dim('b') < 3) & (Dim('c') == 4))).build()['bool'],
+            (GreaterEqual('a', 2) & (Less('b', 3) & Equal('c', 4))).build()['bool'],
             {
                 'must': [
                     {'range': {'b': {'lt': 3}}},
@@ -42,7 +43,7 @@ class TestFilters(unittest.TestCase):
 
     def test_or(self):
         self.assertEqual(
-            ((Dim('a') >= 2) | (Dim('b') < 3)).build()['bool'],
+            (GreaterEqual('a', 2) | Less('b', 3)).build()['bool'],
             {
                 'should': [
                     {'range': {'a': {'gte': 2}}},
@@ -50,7 +51,7 @@ class TestFilters(unittest.TestCase):
             })
 
         self.assertEqual(
-            ((Dim('a') >= 2) | (Dim('b') < 3) | (Dim('c') == 4)).build()['bool'],
+            (GreaterEqual('a', 2) | Less('b', 3) | Equal('c', 4)).build()['bool'],
             {
                 'should': [
                     {'range': {'a': {'gte': 2}}},
@@ -59,7 +60,7 @@ class TestFilters(unittest.TestCase):
             })
 
         self.assertEqual(
-            ((Dim('a') >= 2) | ((Dim('b') < 3) | (Dim('c') == 4))).build()['bool'],
+            (GreaterEqual('a', 2) | (Less('b', 3) | Equal('c', 4))).build()['bool'],
             {
                 'should': [
                     {'range': {'b': {'lt': 3}}},
@@ -69,13 +70,13 @@ class TestFilters(unittest.TestCase):
 
     def test_not(self):
         self.assertEqual(
-            (~(Dim('a') >= 2)).build()['bool'],
+            (~GreaterEqual('a', 2)).build()['bool'],
             {
                 'must_not':
                     {'range': {'a': {'gte': 2}}}})
 
     def test_not_not(self):
-        exp = Dim('a') >= 2
+        exp = GreaterEqual('a', 2)
         print((~exp).build())
         print((~~exp).build())
         self.assertEqual(
@@ -87,7 +88,7 @@ class TestFilters(unittest.TestCase):
                             {'range': {'a': {'gte': 2}}}}}})
 
     def test_not_and(self):
-        exp = (Dim('a') >= 2) & (Dim('b') < 3)
+        exp = GreaterEqual('a', 2) & Less('b', 3)
         self.assertEqual(
             (~exp).build()['bool'],
             {
@@ -101,8 +102,8 @@ class TestFilters(unittest.TestCase):
             })
 
     def test_and_or(self):
-        exp = (Dim('b') < 3) | (Dim('c') == 4)
-        actual = (Dim('a') >= 2) & exp
+        exp = Less('b', 3) | Equal('c', 4)
+        actual = GreaterEqual('a', 2) & exp
         print(actual.debug_string())
 
         self.assertEqual(

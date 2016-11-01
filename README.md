@@ -19,44 +19,23 @@ pip3 install pandasticsearch
 A `Pandasticsearch` object comes with a bunch of high level APIs out of box:
 
 ```python
->>> from pandasticsearch import Pandasticsearch, col, max
+# create a Pandasticsearch object
+>>> from pandasticsearch import Pandasticsearch
 >>> ps = Pandasticsearch('http://localhost:9200', index='company')
 
 # filter & top
+>>> from pandasticsearch import col
 >>> ps.where(col('birthYear') == 1990).top()
 ...
 ... 
 ...
 
 # filter & aggregation
->>> ps.where(col('department') == 'finance').aggregate(avg('birthYear'))
+>>> from pandasticsearch.aggregators import Avg
+>>> ps.where(col('department') == 'finance').aggregate(Avg('birthYear'))
 >>> _.to_pandas()
    avg(birthYear)
 0     1986.227061
-
-# value count
->>> ps.value_count('age')
->>> _.to_pandas()
-   value_count(name)
-0              1501780
-
-# distinct count 
->>> ps.distinct_count('name')
->>> _.to_pandas()
-   value_count(name)
-0             771665
-
-# percentiles
->>> ps.percentiles('birthYear', percents=[25,50,75])
->>> _.to_pandas()
-     25.0    50.0    75.0
-0  1983.0  1989.0  1993.0
-
-# percentile ranks
->>> ps.percentile_ranks('birthYear', values=[1990,1985])
->>> _.to_pandas()
-      1985.0     1990.0
-0  31.678808  56.836569
 ```
 
 ### SqlClient (Recommended)
@@ -120,7 +99,43 @@ values: [{'a': 1, 'b': 1}, {'a': 2, 'b': 2}, {'a': 3, 'b': 3}]
 2  3  3
 ```
 
-### Groupby (Aggregation)
+### Metric Aggregation
+
+```
+>>> from pandasticsearch import Pandasticsearch
+>>> ps = Pandasticsearch('http://localhost:9200', index='company')
+
+# value count
+>>> from pandasticsearch.aggregators import ValueCount
+>>> ps.aggregate(ValueCount('age'))
+>>> _.to_pandas()
+   value_count(name)
+0              1501780
+
+# distinct count
+>>> from pandasticsearch.aggregators import Cardinality
+>>> ps.aggregate(Cardinality('name'))
+>>> _.to_pandas()
+   cardinality(name)
+0             771665
+
+# percentiles
+>>> from pandasticsearch.aggregators import Percentiles
+>>> ps.aggregate(Percentiles('birthYear', percents=[25,50,75]))
+>>> _.to_pandas()
+     25.0    50.0    75.0
+0  1983.0  1989.0  1993.0
+
+# percentile ranks
+>>> from pandasticsearch.aggregators import PercentileRanks
+>>> ps.aggregate(PercentileRanks('birthYear', values=[1990,1985]))
+>>> _.to_pandas()
+      1985.0     1990.0
+0  31.678808  56.836569
+```
+
+
+### Groupby Aggregation
 
 ```python
 >>> client = SqlClient('http://localhost:9200')

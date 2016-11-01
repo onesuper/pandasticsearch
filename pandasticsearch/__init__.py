@@ -1,5 +1,3 @@
-from pandasticsearch.api import Pandasticsearch
-from pandasticsearch.filters import Dim
-from pandasticsearch.utils.metric import max, avg, min
+from pandasticsearch.api import Pandasticsearch, Dim
 
 col = Dim
