@@ -15,7 +15,7 @@ class TestAPI(unittest.TestCase):
 
         top = ps.top()
         print(repr(top))
-        self.assertEqual(repr(top), 'values: [{}]')
+        self.assertEqual(repr(top), 'Select: 1 rows')
 
 
 if __name__ == '__main__':

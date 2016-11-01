@@ -89,6 +89,9 @@ class Select(Query):
         super(Select, self).__init__()
         self._values = []
 
+    def __repr__(self):
+        return 'Select: {0} rows'.format(len(self._values))
+
     def explain_result(self, result=None):
         super(Select, self).explain_result(result)
         self._values = [hit['_source'] for hit in self._result_dict['hits']['hits']]
@@ -105,6 +108,9 @@ class Agg(Query):
         self._index_names = []
         self._indexes = []
         self._values = []
+
+    def __repr__(self):
+        return 'Agg: {0} rows'.format(len(self._values))
 
     def explain_result(self, result=None):
         super(Agg, self).explain_result(result)
