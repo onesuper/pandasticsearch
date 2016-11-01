@@ -31,7 +31,7 @@ class Pandasticsearch(object):
         self._filter = filter
         return self
 
-    def top(self, size=10):
+    def show(self, size=10):
         query = self._build_query(filter=self._filter, size=size)
         return self._client.execute(query, Select())
 

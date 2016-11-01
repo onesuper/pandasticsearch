@@ -18,7 +18,7 @@ class TestAPI(unittest.TestCase):
         mock_urlopen.return_value = response
         ps = create_ps()
 
-        top = ps.top()
+        top = ps.show()
         print(repr(top))
         self.assertEqual(repr(top), 'Select: 1 row')
 

@@ -1,7 +1,7 @@
-## Pandasticsearch = Pandas + Elasticsearch
+## Pandasticsearch = Elasticsearch + Pandas DataFrame
 
 Pandasticsearch is a lightweight Elasticsearch client for data-analysis purpose. It interprets query results into
- [Pandas](http://pandas.pydata.org) objects for data analysis. This can be used to gain direct insight
+ [Pandas](http://pandas.pydata.org) DataFrame objects for data analysis. This can be used to gain direct insight
   from Elasticsearch's analysis result, e.g. multi-level nested aggregation. Elasticsearch is skilled 
   in real-time indexing, search and data-analysis. The results returned by Elasticsearch Rest API still
   require processing before data scientists can conduct an analysis on. 
@@ -14,28 +14,19 @@ pip3 install pandasticsearch
 
 ## Connect to ES
 
-### High Level API (Experimental)
+### High Level API
 
-A `Pandasticsearch` object comes with a bunch of high level APIs out of box:
+A `Pandasticsearch` object accesses Elasticsearch with high level API, like [elasticsearch-dsl-py](https://github.com/elastic/elasticsearch-dsl-py)
+, but Pandas-flavored.
 
 ```python
 # create a Pandasticsearch object
->>> from pandasticsearch import Pandasticsearch
+>>> from pandasticsearch import Pandasticsearch, col
 >>> ps = Pandasticsearch('http://localhost:9200', index='company')
 
 # filter + top
->>> from pandasticsearch import col
->>> ps.filter(col('birthYear') == 1990).top()
-...
-... 
-...
-
-# filter + aggregation
->>> from pandasticsearch.aggregators import Avg
->>> ps.filter(col('department') == 'finance').aggregate(Avg('birthYear'))
->>> _.to_pandas()
-   avg(birthYear)
-0     1986.227061
+>>> ps.filter(col('birthYear') == 1990).show(10)
+Select: 10 rows
 
 # Pandas-flavored filter 
 >>> ps[ps['department'] == 'finance'].aggregate(Avg('birthYear'))
@@ -43,21 +34,17 @@ A `Pandasticsearch` object comes with a bunch of high level APIs out of box:
    avg(birthYear)
 0     1986.227061
 
+# filter + aggregation
+>>> from pandasticsearch.aggregators import Avg
+>>> ps.filter(col('department') == 'finance').aggregate(Avg('birthYear'))
+>>> _.to_pandas()
+   avg(birthYear)
+0     1986.227061
 ```
 
-### SqlClient (Recommended)
 
-A `SqlClient` talks to [Elasticsearch-SQL](https://github.com/NLPchina/elasticsearch-sql) (You need to install the plugin first):
 
-```python
-from pandasticsearch.client import SqlClient
-
-client = SqlClient('http://localhost:9200')
-query = client.execute('select * from table_name')
-print(query.json)
-```
-
-### RestClient (Minimal Dependency)
+### RestClient
 
 A `RestClient` talks to default Elasticsearch Rest API :
 
@@ -69,7 +56,20 @@ query = client.execute("query":{"match_all":{}}})
 print(query.json)
 ```
 
-### Used with Other Python Client
+
+### SqlClient
+
+A `SqlClient` talks to [Elasticsearch-SQL](https://github.com/NLPchina/elasticsearch-sql) (You need to install the plugin first):
+
+```python
+from pandasticsearch.client import SqlClient
+
+client = SqlClient('http://localhost:9200')
+query = client.execute('select * from table_name')
+print(query.json)
+```
+
+### Use with Another Python Client
 
 Pandasticsearch can also be used with another full featured Python client:
 
@@ -97,7 +97,7 @@ df = select.to_pandas()
 >>> client = SqlClient('http://localhost:9200')
 >>> select = client.execute('select a,b from table_name limit 3', query=Select())
 >>> select
-values: [{'a': 1, 'b': 1}, {'a': 2, 'b': 2}, {'a': 3, 'b': 3}]
+Select: 3 rows
 >>> df = select.to_pandas()
 >>> df
    a  b
@@ -147,9 +147,7 @@ values: [{'a': 1, 'b': 1}, {'a': 2, 'b': 2}, {'a': 3, 'b': 3}]
 >>> agg
 >>> df = agg.to_pandas()
 >>> df
-index_names: ('agg_key',)
-indexes: [('a',), ('b',)]
-values: [{'f1': 100}, {'f1': 200}]
+Agg: 2 rows
           f1
 agg_key
 a        100
@@ -166,7 +164,7 @@ b        200
     group by agg_key1, agg_key2
     ''', query=Agg())
 >>> agg
-Agg: 1 row
+Agg: 4 rows
 >>> df = agg.to_pandas()
 >>> df
                     f1  f2
