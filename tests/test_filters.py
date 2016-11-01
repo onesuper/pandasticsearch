@@ -13,6 +13,7 @@ class TestFilters(unittest.TestCase):
         exp = Equal('a', 2)
         self.assertEqual((~exp).build()['bool'], {"must_not": {"term": {"a": 2}}})
         self.assertEqual(Greater('a', 2).build(), {"range": {"a": {"gt": 2}}})
+        self.assertEqual(IsIn('a', [1, 2, 3]).build(), {'terms': {'a': [1, 2, 3]}})
 
     def test_and(self):
         self.assertEqual(

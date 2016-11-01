@@ -25,17 +25,24 @@ A `Pandasticsearch` object comes with a bunch of high level APIs out of box:
 
 # filter + top
 >>> from pandasticsearch import col
->>> ps.where(col('birthYear') == 1990).top()
+>>> ps.filter(col('birthYear') == 1990).top()
 ...
 ... 
 ...
 
 # filter + aggregation
 >>> from pandasticsearch.aggregators import Avg
->>> ps.where(col('department') == 'finance').aggregate(Avg('birthYear'))
+>>> ps.filter(col('department') == 'finance').aggregate(Avg('birthYear'))
 >>> _.to_pandas()
    avg(birthYear)
 0     1986.227061
+
+# Pandas-flavored filter 
+>>> ps[ps['department'] == 'finance'].aggregate(Avg('birthYear'))
+>>> _.to_pandas()
+   avg(birthYear)
+0     1986.227061
+
 ```
 
 ### SqlClient (Recommended)
@@ -159,9 +166,7 @@ b        200
     group by agg_key1, agg_key2
     ''', query=Agg())
 >>> agg
-index_names: ('agg_key1', 'agg_key2')
-indexes: [('a', 'x'), ('a', 'y'), ('b', 'x'), ('b', 'y')]
-values: [{'f2': 1, 'f1': 100}, {'f2': 2, 'f1': 200}, {'f2': 3, 'f1': 300}, {'f2': 4, 'f1': 400}]
+Agg: 1 row
 >>> df = agg.to_pandas()
 >>> df
                     f1  f2

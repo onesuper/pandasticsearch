@@ -90,7 +90,8 @@ class Select(Query):
         self._values = []
 
     def __repr__(self):
-        return 'Select: {0} rows'.format(len(self._values))
+        rows = len(self._values)
+        return 'Select: {0} row{1}'.format(rows, 's' if rows > 1 else '')
 
     def explain_result(self, result=None):
         super(Select, self).explain_result(result)
@@ -110,7 +111,8 @@ class Agg(Query):
         self._values = []
 
     def __repr__(self):
-        return 'Agg: {0} rows'.format(len(self._values))
+        rows = len(self._values)
+        return 'Agg: {0} row{1}'.format(rows, 's' if rows > 1 else '')
 
     def explain_result(self, result=None):
         super(Agg, self).explain_result(result)
@@ -154,4 +156,3 @@ class Agg(Query):
 
         if len(row) > 0:
             yield (names, indexes, row)
-

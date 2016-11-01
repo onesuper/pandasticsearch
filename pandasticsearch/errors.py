@@ -13,3 +13,7 @@ class ServerDefinedException(PandasticSearchException):
 
 class ParseResultException(PandasticSearchException):
     pass
+
+
+class UnsupportedExpressionException(PandasticSearchException):
+    pass

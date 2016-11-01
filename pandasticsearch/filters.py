@@ -99,6 +99,7 @@ class Equal(Filter):
 class IsIn(Filter):
     def __init__(self, dim, value):
         super(IsIn, self).__init__()
+        assert isinstance(value, list)
         self._filter = {'terms': {dim: value}}
 
 
