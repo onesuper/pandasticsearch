@@ -10,10 +10,10 @@ extras_require = {
 
 setup(
     name='pandasticsearch',
-    version='0.0.8',
+    version='0.0.9',
     author='onesuper',
     author_email='onesuperclark@gmail.com',
-    packages=['pandasticsearch'],
+    packages=['pandasticsearch', 'pandasticsearch.utils'],
     url='http://pypi.python.org/pypi/pandasticsearch/',
     license='MIT',
     description='A Pandastic Elasticsearch client for data analyzing.',
