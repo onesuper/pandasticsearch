@@ -105,14 +105,14 @@ values: [{'a': 1, 'b': 1}, {'a': 2, 'b': 2}, {'a': 3, 'b': 3}]
 >>> from pandasticsearch import Pandasticsearch
 >>> ps = Pandasticsearch('http://localhost:9200', index='company')
 
-# value count
->>> from pandasticsearch.aggregators import ValueCount
->>> ps.aggregate(ValueCount('age'))
+# count documents/values
+>>> from pandasticsearch.aggregators import CountStar, ValueCount
+>>> ps.aggregate(ValueCount('age'), CountStar())
 >>> _.to_pandas()
-   value_count(name)
-0              1501780
+   count(*)  value_count(birthYear)
+0   1168604                 1167497
 
-# distinct count
+# distinct counts
 >>> from pandasticsearch.aggregators import Cardinality
 >>> ps.aggregate(Cardinality('name'))
 >>> _.to_pandas()

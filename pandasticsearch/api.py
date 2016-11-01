@@ -17,7 +17,6 @@ class Pandasticsearch(object):
         self._last_query = None
 
     def where(self, filter=None):
-        assert isinstance(filter, Filter)
         self._filter = filter
         return self
 
@@ -25,18 +24,22 @@ class Pandasticsearch(object):
         query = self._build_query(filter=self._filter, size=size)
         return self._client.execute(query, Select())
 
-    def aggregate(self, aggregator):
-        assert isinstance(aggregator, Aggregator)
-        query = self._build_query(aggregator=aggregator, filter=self._filter, size=0)
+    def aggregate(self, *args):
+        query = self._build_query(aggs=args, filter=self._filter, size=0)
         return self._client.execute(query, Agg())
 
-    def _build_query(self, aggregator=None, filter=None, size=None):
+    def _build_query(self, aggs=None, filter=None, size=None):
         query = {}
 
-        if aggregator is not None:
-            query['aggs'] = aggregator.build()
+        if aggs is not None and len(aggs) > 0:
+            agg_dict = {}
+            for agg in aggs:
+                assert isinstance(agg, Aggregator)
+                agg_dict.update(agg.build())
+            query['aggregations'] = agg_dict
 
         if filter is not None:
+            assert isinstance(filter, Filter)
             query['query'] = {'filtered': {'filter': filter.build()}}
         else:
             query['query'] = {"match_all": {}}
