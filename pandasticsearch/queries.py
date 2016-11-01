@@ -142,16 +142,16 @@ class Agg(Query):
         # for each agg, yield a row
         row = {}
         for k, v in bucket.items():
-            if 'buckets' in v:
-                for sub_bucket in v['buckets']:
-                    for x in Agg._process_agg(sub_bucket, indexes + (sub_bucket['key'],), names + (k,)):
-                        yield x
-            elif 'value' in v:
-                row[k] = v['value']
-            elif 'values' in v:  # percentiles
-                row = v['values']
-            else:
-                pass
+            if isinstance(v, dict):
+                if 'buckets' in v:
+                    for sub_bucket in v['buckets']:
+                        for x in Agg._process_agg(sub_bucket, indexes + (sub_bucket['key'],), names + (k,)):
+                            yield x
+                elif 'value' in v:
+                    row[k] = v['value']
+                elif 'values' in v:  # percentiles
+                    row = v['values']
+
         if len(row) > 0:
             yield (names, indexes, row)
 

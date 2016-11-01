@@ -50,12 +50,14 @@ class TestQueries(unittest.TestCase):
                         {
                             'key': 'a',
                             'f1': {'value': 100},
-                            'f2': {'value': 1}
+                            'f2': {'value': 1},
+                            "doc_count": 934422
                         },
                         {
                             'key': 'b',
                             'f1': {'value': 200},
-                            'f2': {'value': 2}
+                            'f2': {'value': 2},
+                            "doc_count": 934422
                         },
                     ]
                 }
@@ -83,12 +85,14 @@ class TestQueries(unittest.TestCase):
                                     {
                                         'key': 'x',
                                         'f1': {'value': 100},
-                                        'f2': {'value': 1}
+                                        'f2': {'value': 1},
+                                        "doc_count": 934422
                                     },
                                     {
                                         'key': 'y',
                                         'f1': {'value': 200},
-                                        'f2': {'value': 2}
+                                        'f2': {'value': 2},
+                                        "doc_count": 934422
                                     },
                                 ]
                             }
@@ -100,12 +104,14 @@ class TestQueries(unittest.TestCase):
                                     {
                                         'key': 'x',
                                         'f1': {'value': 300},
-                                        'f2': {'value': 3}
+                                        'f2': {'value': 3},
+                                        "doc_count": 934422
                                     },
                                     {
                                         'key': 'y',
                                         'f1': {'value': 400},
-                                        'f2': {'value': 4}
+                                        'f2': {'value': 4},
+                                        "doc_count": 934422
                                     },
                                 ]
                             }
