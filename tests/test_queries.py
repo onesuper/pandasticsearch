@@ -41,6 +41,29 @@ class TestQueries(unittest.TestCase):
         self.assertIsNotNone(agg.result)
         self.assertEqual(len(agg), 1)
 
+    def test_agg_dict_value(self):
+        agg = Agg()
+        agg._result_dict = {
+            'aggregations': {
+                'f1': {
+                    'values': {
+                        'a': 1,
+                        'b': 2,
+                        'c': 3,
+                    }
+                },
+            }
+        }
+
+        agg.explain_result()
+        print(agg)
+        print(repr(agg))
+        print(agg.to_pandas())
+
+        self.assertEqual(len(agg), 1)
+        self.assertIsNotNone(agg.result)
+        self.assertEqual(len(agg.result[0]), 3)
+
     def test_agg_buckets(self):
         agg = Agg()
         agg._result_dict = {
@@ -69,8 +92,9 @@ class TestQueries(unittest.TestCase):
         print(repr(agg))
         print(agg.to_pandas())
 
-        self.assertIsNotNone(agg.result)
         self.assertEqual(len(agg), 2)
+        self.assertIsNotNone(agg.result)
+        self.assertEqual(len(agg.result[0]), 2)
 
     def test_agg_nested_buckets(self):
         agg = Agg()
@@ -125,9 +149,10 @@ class TestQueries(unittest.TestCase):
         print(agg)
         print(repr(agg))
         print(agg.to_pandas())
-        self.assertIsNotNone(agg.result)
-        self.assertEqual(len(agg), 4)
 
+        self.assertEqual(len(agg), 4)
+        self.assertIsNotNone(agg.result)
+        self.assertEqual(len(agg.result[0]), 2)
 
 if __name__ == '__main__':
     unittest.main()
