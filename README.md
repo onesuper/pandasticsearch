@@ -16,29 +16,30 @@ pip3 install pandasticsearch
 
 ### High Level API
 
-A `Pandasticsearch` object accesses Elasticsearch with high level API, like [elasticsearch-dsl-py](https://github.com/elastic/elasticsearch-dsl-py)
-, but Pandas-flavored.
+A `Pandasticsearch` object accesses Elasticsearch with high level API, like [elasticsearch-dsl-py](https://github.com/elastic/elasticsearch-dsl-py).
+It is type-safe, easy-to-use and Pandas-flavored.
 
 ```python
 # create a Pandasticsearch object
->>> from pandasticsearch import Pandasticsearch, Column, Avg
+>>> from pandasticsearch import Pandasticsearch, Avg
 >>> ps = Pandasticsearch('http://localhost:9200', index='company')
+>>> ps.columns
+['name', 'age', 'department', 'gender']
+>>> ps.printSchema()
+...
+...
+...
 
-# filter + top
->>> ps.filter(Column('birthYear') == 1990).show(10)
+# filter + show
+>>> ps.filter(ps['age'] > 25).show(10)
 Select: 10 rows
 
-# Pandas-flavored filter 
->>> ps[ps['department'] == 'finance'].aggregate(Avg('birthYear'))
->>> _.to_pandas()
-   avg(birthYear)
-0     1986.227061
-
 # filter + aggregation
->>> ps.filter(col('department') == 'finance').aggregate(Avg('birthYear'))
+>>> ps.filter(ps['gender'] == 'male').aggregate(Avg('age'))
+Agg: 1 row
 >>> _.to_pandas()
-   avg(birthYear)
-0     1986.227061
+   avg(age)
+0     27.423532
 ```
 
 

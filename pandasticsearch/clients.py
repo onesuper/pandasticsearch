@@ -25,7 +25,7 @@ class RestClient(object):
         self.endpoint = endpoint
 
     def execute(self, data, query=Query()):
-        res = self._post(data=data)
+        res = self.post(data=data)
         query.parse_json(res)
         query.explain_result()
         return query
@@ -37,7 +37,34 @@ class RestClient(object):
             url = self.url + '/' + self.endpoint
         return url
 
-    def _post(self, **kwargs):
+    def get(self, **kwargs):
+        try:
+            url = self._prepare_url()
+            params = kwargs.get('params', None)
+
+            if params is not None:
+                url = '{0}?{1}'.format(url, urllib.parse.urlencode(params))
+
+            req = urllib.request.Request(url=url)
+            res = urllib.request.urlopen(req)
+            data = res.read().decode("utf-8")
+            res.close()
+        except urllib.error.HTTPError:
+            _, e, _ = sys.exc_info()
+            reason = None
+            if e.code != 200:
+                try:
+                    reason = json.loads(e.read().decode("utf-8"))
+                except (ValueError, AttributeError, KeyError):
+                    pass
+                else:
+                    reason = reason.get('error', None)
+
+            raise ServerDefinedException(reason)
+        else:
+            return data
+
+    def post(self, **kwargs):
         try:
             url = self._prepare_url()
             data = kwargs.get('data', None)
@@ -85,7 +112,7 @@ class SqlClient(RestClient):
         super(SqlClient, self).__init__(url, '_sql')
 
     def execute(self, sql, query=Query()):
-        res = self._post(params={'sql': sql})
+        res = self.post(params={'sql': sql})
         query.parse_json(res)
         query.explain_result()
         return query

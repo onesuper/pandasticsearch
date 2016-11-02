@@ -5,7 +5,6 @@ from pandasticsearch.errors import ColumnExprException
 from pandasticsearch.filters import Filter
 from pandasticsearch.types import Column
 
-
 import json
 import six
 
@@ -17,11 +16,29 @@ class Pandasticsearch(object):
         else:
             endpoint = index + '/' + type + '/_search'
         self._client = RestClient(url, endpoint)
+
+        # setup the columns(properties)
+        if type is None:
+            mapping_endpoint = index
+        else:
+            mapping_endpoint = index + '/_mapping/' + type
+
+        mapping_client = RestClient(url, mapping_endpoint)
+        self._mapping_json = json.loads(mapping_client.get())
+
+        self._columns = []
+        for _, mappings in six.iteritems(self._mapping_json):
+            for _, properties in six.iteritems(mappings['mappings']):
+                for k, _ in six.iteritems(properties['properties']):
+                    self._columns.append(k)
+
         self._filter = None
         self._last_query = None
 
     def __getitem__(self, item):
         if isinstance(item, six.string_types):
+            if item not in self._columns:
+                raise ColumnExprException('Column does not exist: [{0}]'.format(item))
             return Column(item)
         elif isinstance(item, Filter):
             self._filter = item
@@ -63,8 +80,36 @@ class Pandasticsearch(object):
         self._last_query = query
         return query
 
-    def debug_string(self, indent=4):
-        return json.dumps(self._last_query, indent=indent)
+    def debug_string(self):
+        """
+        Return a indented JSON string returned by the Elasticsearch Server
+        """
+        return json.dumps(self._last_query, indent=4)
 
+    def print_schema(self):
+        """
+        Prints out the schema in the tree format.
+        >>> ps.print_schema()
+        index_name
+        |-- type_name
+          |-- experience :  {'type': 'integer'}
+          |-- id :  {'type': 'string'}
+          |-- mobile :  {'index': 'not_analyzed', 'type': 'string'}
+          |-- regions :  {'index': 'not_analyzed', 'type': 'string'}
+        """
+        for index, mappings in six.iteritems(self._mapping_json):
+            print(index)
+            for typ, properties in six.iteritems(mappings['mappings']):
+                print('|--', typ)
+                for k, v in six.iteritems(properties['properties']):
+                    print('  |--', k, ': ', v)
 
-
+    @property
+    def columns(self):
+        """
+        Returns all column names as a list.
+        :return: column names as a list
+        >>> ps.columns
+        ['age', 'name']
+        """
+        return self._columns
