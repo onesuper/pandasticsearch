@@ -36,14 +36,19 @@ company
   |-- intro: {'store': True, 'analyzer': 'ik', 'type': 'string'}
 
 # filter 
->>> ps.filter(ps['age'] > 25).show(10)
-Select: 10 rows
->>> ps[ps['age'] < 30].show(10)
-Select: 10 rows
+>>> ps.filter(ps['age'] > 25).show(3)
+Row(...)
+Row(...)
+Row(...)
+
+>>> ps[ps['age'] < 30].show(3)
+Row(...)
+Row(...)
+Row(...)
 
 #  aggregation
 >>> ps[ps['gender'] == 'male'].aggregate(Avg('age'))
-Agg: 1 row
+...
 >>> _.to_pandas()
    avg(age)
 0     27.423532

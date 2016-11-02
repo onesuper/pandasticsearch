@@ -32,7 +32,7 @@ class Row(tuple):
     The builtin L{DataFrame} row type for accessing before converted into Pandas DataFrame.
     The fields will be sorted by names.
 
-    >>> row = Row(name="Alice", age=11)
+    >>> row = Row(name="Alice", age=12)
     >>> row
     Row(age=12, name='Alice')
     >>> row['name'], row['age']

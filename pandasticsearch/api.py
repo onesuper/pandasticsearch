@@ -56,7 +56,7 @@ class Pandasticsearch(object):
 
     def aggregate(self, *args):
         query = self._build_query(aggs=args, filter=self._filter, size=0)
-        return Select.from_dict(self._client.post(data=query))
+        return Agg.from_dict(self._client.post(data=query))
 
     def count(self):
         """

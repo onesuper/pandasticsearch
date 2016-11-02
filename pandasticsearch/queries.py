@@ -2,7 +2,6 @@ import collections
 import json
 import pandas
 
-
 from pandasticsearch.types import Row
 from pandasticsearch.errors import NoSuchDependencyException
 
@@ -39,20 +38,16 @@ class Query(collections.MutableSequence):
         """
         raise NotImplementedError('implemented in subclass')
 
-    def pretty(self, indent=None):
+    def print_json(self):
         """
         Prettify the result (requires pygements package)
         :return: The formatted string
         :rtype: string
         :raise: ImportError
         """
-        try:
-            from pygments import highlight, lexers, formatters
-            indented = json.dumps(self._result_dict, sort_keys=True, separators=(',', ': '), indent=indent,
-                                  ensure_ascii=False)
-            return highlight(indented, lexers.JsonLexer(), formatters.TerminalFormatter())
-        except ImportError:
-            raise NoSuchDependencyException('pretty() method requires pygements package')
+        indented_json = json.dumps(self._result_dict, sort_keys=True, separators=(',', ': '), indent=4,
+                                   ensure_ascii=False)
+        print(indented_json)
 
     @property
     def result(self):
@@ -95,11 +90,10 @@ class Query(collections.MutableSequence):
 class Select(Query):
     def __init__(self):
         super(Select, self).__init__()
-        self._values = []
 
     def __repr__(self):
-        rows = len(self._values)
-        return 'Select: {0} row{1}'.format(rows, 's' if rows > 1 else '')
+        rows = [Row(**v) for v in self._values]
+        return '\n'.join([repr(r) for r in rows])
 
     def explain_result(self, result=None):
         super(Select, self).explain_result(result)
@@ -120,19 +114,15 @@ class Select(Query):
 class Agg(Query):
     def __init__(self):
         super(Agg, self).__init__()
-        self._index_names = []
-        self._indexes = []
-        self._values = []
-
-    def __repr__(self):
-        rows = len(self._values)
-        return 'Agg: {0} row{1}'.format(rows, 's' if rows > 1 else '')
+        self._index_names = None
+        self._indexes = None
 
     def explain_result(self, result=None):
         super(Agg, self).explain_result(result)
         tuples = list(Agg._process_agg(self._result_dict['aggregations']))
         assert len(tuples) > 0
         self._index_names = list(tuples[0][0])
+        self._values = []
         for t in tuples:
             _, index, row = t
             self.append(row)
@@ -140,8 +130,8 @@ class Agg(Query):
                 self._indexes.append(index)
 
     def to_pandas(self):
-        if self._values:
-            if len(self._indexes) > 0:
+        if self._values is not None:
+            if self._indexes is not None:
                 index = pandas.MultiIndex.from_tuples(self._indexes, names=self._index_names)
                 df = pandas.DataFrame(data=self._values, index=index)
             else:
