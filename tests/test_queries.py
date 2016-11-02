@@ -4,82 +4,43 @@ import unittest
 from pandasticsearch.queries import Select, Agg
 
 
+def create_hits():
+    return {
+        'hits': {
+            'hits': [
+                {'_source': {'a': 1, 'b': 1}},
+                {'_source': {'a': 2, 'b': 2}},
+                {'_source': {'a': 3, 'b': 3}},
+            ]
+        }
+    }
+
+
 class TestQueries(unittest.TestCase):
     def test_select_explain_result(self):
         select = Select()
-        select._result_dict = {
-            'hits': {
-                'hits': [
-                    {'_source': {'a': 1, 'b': 1}},
-                    {'_source': {'a': 2, 'b': 2}},
-                    {'_source': {'a': 3, 'b': 3}},
-                ]
-            }
-        }
+        select._result_dict = create_hits()
         select.explain_result()
         print(select)
         print(repr(select))
-        print(select.to_pandas())
 
         self.assertIsNotNone(select.result)
         self.assertEqual(len(select), 3)
 
     def test_select_from_dict(self):
-        select = Select.from_dict({
-            'hits': {
-                'hits': [
-                    {'_source': {'a': 1, 'b': 1}},
-                    {'_source': {'a': 2, 'b': 2}},
-                    {'_source': {'a': 3, 'b': 3}},
-                ]
-            }
-        })
+        select = Select.from_dict(create_hits())
         print(select)
         print(repr(select))
-        print(select.to_pandas())
 
         self.assertIsNotNone(select.result)
         self.assertEqual(len(select), 3)
 
-    def test_agg_no_buckets(self):
-        agg = Agg()
-        agg._result_dict = {
-            'aggregations': {
-                'f1': {'value': 100},
-                'f2': {'value': 200},
-            }
-        }
+    def test_select_result(self):
+        select = Select.from_dict(create_hits())
+        print(select.result)
 
-        agg.explain_result()
-        print(agg)
-        print(repr(agg))
-        print(agg.to_pandas())
-
-        self.assertIsNotNone(agg.result)
-        self.assertEqual(len(agg), 1)
-
-    def test_agg_dict_value(self):
-        agg = Agg()
-        agg._result_dict = {
-            'aggregations': {
-                'f1': {
-                    'values': {
-                        'a': 1,
-                        'b': 2,
-                        'c': 3,
-                    }
-                },
-            }
-        }
-
-        agg.explain_result()
-        print(agg)
-        print(repr(agg))
-        print(agg.to_pandas())
-
-        self.assertEqual(len(agg), 1)
-        self.assertIsNotNone(agg.result)
-        self.assertEqual(len(agg.result[0]), 3)
+        self.assertIsNotNone(select.result)
+        self.assertEqual(len(select.result[0]), 2)
 
     def test_agg_buckets(self):
         agg = Agg()
@@ -170,6 +131,7 @@ class TestQueries(unittest.TestCase):
         self.assertEqual(len(agg), 4)
         self.assertIsNotNone(agg.result)
         self.assertEqual(len(agg.result[0]), 2)
+
 
 if __name__ == '__main__':
     unittest.main()

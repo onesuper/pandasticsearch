@@ -15,5 +15,5 @@ class ParseResultException(PandasticSearchException):
     pass
 
 
-class UnsupportedExpressionException(PandasticSearchException):
+class ColumnExprException(PandasticSearchException):
     pass

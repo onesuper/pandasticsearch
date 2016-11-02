@@ -1,8 +1,10 @@
 from pandasticsearch.clients import RestClient
 from pandasticsearch.queries import Agg, Select
-from pandasticsearch.filters import Filter, Equal, GreaterEqual, Greater, Less, LessEqual, IsIn
 from pandasticsearch.aggregators import Aggregator
-from pandasticsearch.errors import UnsupportedExpressionException
+from pandasticsearch.errors import ColumnExprException
+from pandasticsearch.filters import Filter
+from pandasticsearch.types import Column
+
 
 import json
 import six
@@ -20,12 +22,12 @@ class Pandasticsearch(object):
 
     def __getitem__(self, item):
         if isinstance(item, six.string_types):
-            return Dim(item)
+            return Column(item)
         elif isinstance(item, Filter):
             self._filter = item
             return self
         else:
-            raise UnsupportedExpressionException('Unsupported expression: [{0}]'.format(item))
+            raise ColumnExprException('Unsupported expr: [{0}]'.format(item))
 
     def filter(self, filter=None):
         self._filter = filter
@@ -65,27 +67,4 @@ class Pandasticsearch(object):
         return json.dumps(self._last_query, indent=indent)
 
 
-class Dim(object):
-    def __init__(self, dim):
-        self._dim = dim
 
-    def __eq__(self, other):
-        return Equal(dim=self._dim, value=other)
-
-    def __ne__(self, other):
-        return ~Equal(dim=self._dim, value=other)
-
-    def __gt__(self, other):
-        return Greater(dim=self._dim, value=other)
-
-    def __lt__(self, other):
-        return Less(dim=self._dim, value=other)
-
-    def __ge__(self, other):
-        return GreaterEqual(dim=self._dim, value=other)
-
-    def __le__(self, other):
-        return LessEqual(dim=self._dim, value=other)
-
-    def isin(self, other):
-        return IsIn(dim=self._dim, value=other)

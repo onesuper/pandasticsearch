@@ -2,7 +2,7 @@
 import unittest
 from mock import patch, Mock
 
-from pandasticsearch.api import Pandasticsearch, Dim
+from pandasticsearch.api import Pandasticsearch, Column
 from pandasticsearch.filters import Greater
 
 
@@ -12,7 +12,7 @@ def create_ps():
 
 class TestAPI(unittest.TestCase):
     @patch('pandasticsearch.clients.urllib.request.urlopen')
-    def test_pandasticsearch_top(self, mock_urlopen):
+    def test_top(self, mock_urlopen):
         response = Mock()
         response.read.return_value = """{"hits" : {"hits": [{"_source": {}}] }}""".encode("utf-8")
         mock_urlopen.return_value = response
@@ -24,7 +24,7 @@ class TestAPI(unittest.TestCase):
 
     def test_getitem(self):
         ps = create_ps()
-        self.assertTrue(isinstance(ps['a'], Dim))
+        self.assertTrue(isinstance(ps['a'], Column))
         self.assertEqual(ps[ps['a'] > 2]._filter.build(), {'range': {'a': {'gt': 2}}})
 
     def test_filter(self):

@@ -2,13 +2,22 @@ import collections
 import json
 import pandas
 
+
+from pandasticsearch.types import Row
 from pandasticsearch.errors import NoSuchDependencyException
 
 
 class Query(collections.MutableSequence):
     """
-    Query objects are produced by Elasticsearch clients and can be used for exporting query results into
-    pandas.DataFrame objects for subsequent analysis.
+    Query objects are produced by Elasticsearch clients and can be used
+    for exporting query results into pandas.DataFrame objects for subsequent analysis.
+
+    It also provides some methods for basic data exploring:
+    >>> query.collect()
+    [Row(age=2, name='Alice'), Row(age=5, name='Bob')]
+
+    The original JSON returned by Elasticsearch server can be retrieved as well:
+    >>> query.json
     """
 
     def __init__(self):
@@ -52,6 +61,9 @@ class Query(collections.MutableSequence):
     @property
     def result(self):
         return self._values
+
+    def collect(self):
+        return [Row(v) for v in self._values]
 
     @property
     def json(self):

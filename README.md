@@ -21,11 +21,11 @@ A `Pandasticsearch` object accesses Elasticsearch with high level API, like [ela
 
 ```python
 # create a Pandasticsearch object
->>> from pandasticsearch import Pandasticsearch, col
+>>> from pandasticsearch import Pandasticsearch, Column, Avg
 >>> ps = Pandasticsearch('http://localhost:9200', index='company')
 
 # filter + top
->>> ps.filter(col('birthYear') == 1990).show(10)
+>>> ps.filter(Column('birthYear') == 1990).show(10)
 Select: 10 rows
 
 # Pandas-flavored filter 
@@ -35,7 +35,6 @@ Select: 10 rows
 0     1986.227061
 
 # filter + aggregation
->>> from pandasticsearch.aggregators import Avg
 >>> ps.filter(col('department') == 'finance').aggregate(Avg('birthYear'))
 >>> _.to_pandas()
    avg(birthYear)
@@ -49,8 +48,7 @@ Select: 10 rows
 A `RestClient` talks to default Elasticsearch Rest API :
 
 ```python
->>> from pandasticsearch.client import RestClient
->>> from pandasticsearch.query import Select
+>>> from pandasticsearch import RestClient, Select
 >>> client = RestClient('http://localhost:9200', 'recruit/resume/_search')
 >>> query = client.execute("query":{"match_all":{}}}, Select())
 Select: 3 rows
@@ -62,8 +60,7 @@ Select: 3 rows
 A `SqlClient` talks to [Elasticsearch-SQL](https://github.com/NLPchina/elasticsearch-sql) (You need to install the plugin first):
 
 ```python
->>> from pandasticsearch.client import SqlClient
->>> from pandasticsearch.query import Select
+>>> from pandasticsearch import SqlClient, Select
 >>> client = SqlClient('http://localhost:9200')
 >>> client.execute('select * from table_name limit 3', Select())
 Select: 3 rows
@@ -78,8 +75,7 @@ Pandasticsearch can also be used with another full featured Python client:
 * [pyes](https://github.com/aparo/pyes)
 
 ```python
->>> from elasticsearch import Elasticsearch
->>> from pandasticsearch.query import Select
+>>> from elasticsearch import Elasticsearch, Select
 >>> es = Elasticsearch('http://localhost:9200')
 >>> result_dict = es.search(index="recruit", body={"query": {"match_all": {}}})
 >>> Select.from_dict(result_dict)
@@ -91,6 +87,7 @@ Select: 10 rows
 ### Selection
 
 ```python
+>>> from pandasticsearch import *
 >>> client = SqlClient('http://localhost:9200')
 >>> select = client.execute('select a,b from table_name limit 3', query=Select())
 >>> select
@@ -106,8 +103,7 @@ Select: 3 rows
 ### Metric Aggregation
 
 ```python
->>> from pandasticsearch import Pandasticsearch
->>> from pandasticsearch.aggregators import *
+>>> from pandasticsearch import *
 >>> ps = Pandasticsearch('http://localhost:9200', index='company')
 
 # count documents/values
@@ -139,6 +135,7 @@ Select: 3 rows
 ### Groupby Aggregation
 
 ```python
+>>> from pandasticsearch import *
 >>> client = SqlClient('http://localhost:9200')
 >>> agg = client.execute('select COUNT(*) as f from table_name group by agg_key', query=Agg())
 >>> agg

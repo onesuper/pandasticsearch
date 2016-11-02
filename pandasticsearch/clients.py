@@ -14,7 +14,7 @@ class RestClient(object):
     :param str endpoint: Endpoint that Broker listens for queries on
 
     :Example:
-    >>> from pandasticsearch.clients import RestClient
+    >>> from pandasticsearch import RestClient
     >>> client = RestClient('http://localhost:9200', 'index/type/_search')
     >>> query = client.execute("query":{"match_all":{}}})
     >>> print query
@@ -75,7 +75,7 @@ class SqlClient(RestClient):
     :param str endpoint: Endpoint that Broker listens for queries on
 
     :Example:
-    >>> from pandasticsearch.clients import SqlClient
+    >>> from pandasticsearch import SqlClient
     >>> client = SqlClient('http://localhost:9200')
     >>> query = client.execute('select * from table_name')
     >>> print query, query.json
