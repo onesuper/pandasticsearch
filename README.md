@@ -17,6 +17,8 @@ pip3 install pandasticsearch
 ### High Level API
 
 A `Pandasticsearch` object accesses Elasticsearch with high level API, like [elasticsearch-dsl-py](https://github.com/elastic/elasticsearch-dsl-py).
+
+
 It is type-safe, easy-to-use and Pandas-flavored.
 
 ```python
@@ -24,18 +26,23 @@ It is type-safe, easy-to-use and Pandas-flavored.
 >>> from pandasticsearch import Pandasticsearch, Avg
 >>> ps = Pandasticsearch('http://localhost:9200', index='company')
 >>> ps.columns
-['name', 'age', 'department', 'gender']
+['name', 'age', 'gender', 'intro']
 >>> ps.printSchema()
-...
-...
-...
+company
+|-- employee
+  |-- name: {'index': 'not_analyzed', 'type': 'string'}
+  |-- age: {'type': 'integer'}
+  |-- gender: {'index': 'not_analyzed', 'type': 'string'}
+  |-- intro: {'store': True, 'analyzer': 'ik', 'type': 'string'}
 
-# filter + show
+# filter 
 >>> ps.filter(ps['age'] > 25).show(10)
 Select: 10 rows
+>>> ps[ps['age'] < 30].show(10)
+Select: 10 rows
 
-# filter + aggregation
->>> ps.filter(ps['gender'] == 'male').aggregate(Avg('age'))
+#  aggregation
+>>> ps[ps['gender'] == 'male'].aggregate(Avg('age'))
 Agg: 1 row
 >>> _.to_pandas()
    avg(age)
@@ -43,27 +50,24 @@ Agg: 1 row
 ```
 
 
-
 ### RestClient
 
-A `RestClient` talks to default Elasticsearch Rest API :
+A `RestClient` talks to default Elasticsearch Rest API:
 
 ```python
 >>> from pandasticsearch import RestClient, Select
 >>> client = RestClient('http://localhost:9200', 'recruit/resume/_search')
->>> query = client.execute("query":{"match_all":{}}}, Select())
+>>> result_dict = client.post("query":{"match_all":{}}})
+>>> Select.from_dict(result_dict)
 Select: 3 rows
 ```
 
-
-### SqlClient
-
-A `SqlClient` talks to [Elasticsearch-SQL](https://github.com/NLPchina/elasticsearch-sql) (You need to install the plugin first):
+It can also talk to [Elasticsearch-SQL](https://github.com/NLPchina/elasticsearch-sql) (You need to install the plugin first):
 
 ```python
->>> from pandasticsearch import SqlClient, Select
->>> client = SqlClient('http://localhost:9200')
->>> client.execute('select * from table_name limit 3', Select())
+>>> client = RestClient('http://localhost:9200', '_sql')
+>>> result_dict = client.post(params={'sql': 'select * from table_name limit 3'})
+>>> Select.from_dict(result_dict)
 Select: 3 rows
 ```
 
@@ -84,22 +88,6 @@ Select: 10 rows
 ```
 
 ## Analyze Data in ES
-
-### Selection
-
-```python
->>> from pandasticsearch import *
->>> client = SqlClient('http://localhost:9200')
->>> select = client.execute('select a,b from table_name limit 3', query=Select())
->>> select
-Select: 3 rows
->>> df = select.to_pandas()
->>> df
-   a  b
-0  1  1
-1  2  2
-2  3  3
-```
 
 ### Metric Aggregation
 
@@ -133,26 +121,10 @@ Select: 3 rows
 ```
 
 
-### Groupby Aggregation
-
-```python
->>> from pandasticsearch import *
->>> client = SqlClient('http://localhost:9200')
->>> agg = client.execute('select COUNT(*) as f from table_name group by agg_key', query=Agg())
->>> agg
->>> df = agg.to_pandas()
->>> df
-Agg: 2 rows
-          f1
-agg_key
-a        100
-b        200
-```
-
 ### Multi-Dimensional Aggregation
 
 ```python
->>> client = SqlClient('http://localhost:9200')
+>>> client = RestClient('http://localhost:9200')
 >>> agg = client.execute('''
     select COUNT(*) as f1, AVG(*) as f2
     from table_name

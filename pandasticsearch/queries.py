@@ -25,10 +25,6 @@ class Query(collections.MutableSequence):
         self._values = None
         self._result_dict = None
 
-    def parse_json(self, json_str):
-        res = json.loads(json_str)
-        self._result_dict = res
-
     def explain_result(self, result=None):
         if result is not None:
             assert isinstance(result, dict)

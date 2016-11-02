@@ -1,4 +1,4 @@
-from pandasticsearch.clients import RestClient
+from pandasticsearch.client import RestClient
 from pandasticsearch.queries import Agg, Select
 from pandasticsearch.aggregators import Aggregator, CountStar
 from pandasticsearch.errors import ColumnExprException
@@ -24,7 +24,7 @@ class Pandasticsearch(object):
             mapping_endpoint = index + '/_mapping/' + type
 
         mapping_client = RestClient(url, mapping_endpoint)
-        self._mapping_json = json.loads(mapping_client.get())
+        self._mapping_json = mapping_client.get()
 
         self._columns = []
         for _, mappings in six.iteritems(self._mapping_json):
@@ -52,11 +52,11 @@ class Pandasticsearch(object):
 
     def show(self, size=10):
         query = self._build_query(filter=self._filter, size=size)
-        return self._client.execute(query, Select())
+        return Select.from_dict(self._client.post(data=query))
 
     def aggregate(self, *args):
         query = self._build_query(aggs=args, filter=self._filter, size=0)
-        return self._client.execute(query, Agg())
+        return Select.from_dict(self._client.post(data=query))
 
     def count(self):
         """
