@@ -59,7 +59,7 @@ class Query(collections.MutableSequence):
         return self._values
 
     def collect(self):
-        return [Row(v) for v in self._values]
+        return [Row(**v) for v in self._values]
 
     @property
     def json(self):
