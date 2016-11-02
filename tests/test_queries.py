@@ -5,7 +5,7 @@ from pandasticsearch.queries import Select, Agg
 
 
 class TestQueries(unittest.TestCase):
-    def test_select(self):
+    def test_select_explain_result(self):
         select = Select()
         select._result_dict = {
             'hits': {
@@ -17,6 +17,23 @@ class TestQueries(unittest.TestCase):
             }
         }
         select.explain_result()
+        print(select)
+        print(repr(select))
+        print(select.to_pandas())
+
+        self.assertIsNotNone(select.result)
+        self.assertEqual(len(select), 3)
+
+    def test_select_from_dict(self):
+        select = Select.from_dict({
+            'hits': {
+                'hits': [
+                    {'_source': {'a': 1, 'b': 1}},
+                    {'_source': {'a': 2, 'b': 2}},
+                    {'_source': {'a': 3, 'b': 3}},
+                ]
+            }
+        })
         print(select)
         print(repr(select))
         print(select.to_pandas())

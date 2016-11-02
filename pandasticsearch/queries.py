@@ -102,6 +102,12 @@ class Select(Query):
             df = pandas.DataFrame(data=self._values)
             return df
 
+    @staticmethod
+    def from_dict(d):
+        query = Select()
+        query.explain_result(d)
+        return query
+
 
 class Agg(Query):
     def __init__(self):
@@ -156,3 +162,9 @@ class Agg(Query):
 
         if len(row) > 0:
             yield (names, indexes, row)
+
+    @staticmethod
+    def from_dict(d):
+        agg = Agg()
+        agg.explain_result(d)
+        return agg

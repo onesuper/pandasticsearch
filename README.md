@@ -49,11 +49,11 @@ Select: 10 rows
 A `RestClient` talks to default Elasticsearch Rest API :
 
 ```python
-from pandasticsearch.client import RestClient
-
-client = RestClient('http://localhost:9200', 'recruit/resume/_search')
-query = client.execute("query":{"match_all":{}}})
-print(query.json)
+>>> from pandasticsearch.client import RestClient
+>>> from pandasticsearch.query import Select
+>>> client = RestClient('http://localhost:9200', 'recruit/resume/_search')
+>>> query = client.execute("query":{"match_all":{}}}, Select())
+Select: 3 rows
 ```
 
 
@@ -62,11 +62,11 @@ print(query.json)
 A `SqlClient` talks to [Elasticsearch-SQL](https://github.com/NLPchina/elasticsearch-sql) (You need to install the plugin first):
 
 ```python
-from pandasticsearch.client import SqlClient
-
-client = SqlClient('http://localhost:9200')
-query = client.execute('select * from table_name')
-print(query.json)
+>>> from pandasticsearch.client import SqlClient
+>>> from pandasticsearch.query import Select
+>>> client = SqlClient('http://localhost:9200')
+>>> client.execute('select * from table_name limit 3', Select())
+Select: 3 rows
 ```
 
 ### Use with Another Python Client
@@ -78,15 +78,12 @@ Pandasticsearch can also be used with another full featured Python client:
 * [pyes](https://github.com/aparo/pyes)
 
 ```python
-from elasticsearch import Elasticsearch
-from pandasticsearch.query import Select
-
-es = Elasticsearch('http://localhost:9200')
-result_dict = es.search(index="recruit", body={"query": {"match_all": {}}})
-
-select = Select()
-select.explain_result(result_dict)
-df = select.to_pandas()
+>>> from elasticsearch import Elasticsearch
+>>> from pandasticsearch.query import Select
+>>> es = Elasticsearch('http://localhost:9200')
+>>> result_dict = es.search(index="recruit", body={"query": {"match_all": {}}})
+>>> Select.from_dict(result_dict)
+Select: 10 rows
 ```
 
 ## Analyze Data in ES
