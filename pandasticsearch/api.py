@@ -1,6 +1,6 @@
 from pandasticsearch.clients import RestClient
 from pandasticsearch.queries import Agg, Select
-from pandasticsearch.aggregators import Aggregator
+from pandasticsearch.aggregators import Aggregator, CountStar
 from pandasticsearch.errors import ColumnExprException
 from pandasticsearch.filters import Filter
 from pandasticsearch.types import Column
@@ -57,6 +57,14 @@ class Pandasticsearch(object):
     def aggregate(self, *args):
         query = self._build_query(aggs=args, filter=self._filter, size=0)
         return self._client.execute(query, Agg())
+
+    def count(self):
+        """
+        Returns the number of rows in this index/type.
+        >>> ps.count()
+        2
+        """
+        return self.aggregate(CountStar())[0]['count(*)']
 
     def _build_query(self, aggs=None, filter=None, size=None):
         query = {}
