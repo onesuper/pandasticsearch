@@ -105,7 +105,6 @@ class TestFilters(unittest.TestCase):
     def test_and_or(self):
         exp = Less('b', 3) | Equal('c', 4)
         actual = GreaterEqual('a', 2) & exp
-        print(actual.debug_string())
 
         self.assertEqual(
             actual.build()['bool'],

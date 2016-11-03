@@ -1,6 +1,3 @@
-import json
-
-
 class Aggregator(object):
     def __init__(self, field):
         self._field = field
@@ -9,12 +6,8 @@ class Aggregator(object):
     def build(self):
         return self._aggregator
 
-    def debug_string(self, indent=4):
-        return json.dumps(self._aggregator, indent=indent)
-
 
 class MetricAggregator(Aggregator):
-
     def _metric_agg(self, agg_type, metric_rename=None, params=None):
         if metric_rename is None:
             metric_rename = '{0}({1})'.format(agg_type, self._field)
