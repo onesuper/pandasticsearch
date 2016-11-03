@@ -123,6 +123,7 @@ class Agg(Query):
         assert len(tuples) > 0
         self._index_names = list(tuples[0][0])
         self._values = []
+        self._indexes = []
         for t in tuples:
             _, index, row = t
             self.append(row)
