@@ -1,30 +1,68 @@
-import json
+from pandasticsearch.operators import *
 
 
 class Column(object):
-    def __init__(self, dim):
-        self._dim = dim
+    def __init__(self, field):
+        self._field = field
 
     def __eq__(self, other):
-        return Equal(dim=self._dim, value=other)
+        return Equal(field=self._field, value=other)
 
     def __ne__(self, other):
-        return ~Equal(dim=self._dim, value=other)
+        return ~Equal(field=self._field, value=other)
 
     def __gt__(self, other):
-        return Greater(dim=self._dim, value=other)
+        return Greater(field=self._field, value=other)
 
     def __lt__(self, other):
-        return Less(dim=self._dim, value=other)
+        return Less(field=self._field, value=other)
 
     def __ge__(self, other):
-        return GreaterEqual(dim=self._dim, value=other)
+        return GreaterEqual(field=self._field, value=other)
 
     def __le__(self, other):
-        return LessEqual(dim=self._dim, value=other)
+        return LessEqual(field=self._field, value=other)
 
     def isin(self, other):
-        return IsIn(dim=self._dim, value=other)
+        return IsIn(field=self._field, value=other)
+
+    @property
+    def desc(self):
+        return Sorter(self._field)
+
+    @property
+    def asc(self):
+        return Sorter(self._field, 'asc')
+
+    @property
+    def max(self):
+        return MetricAggregator(self._field, 'max')
+
+    @property
+    def min(self):
+        return MetricAggregator(self._field, 'min')
+
+    @property
+    def avg(self):
+        return MetricAggregator(self._field, 'avg')
+
+    @property
+    def value_count(self):
+        return MetricAggregator(self._field, 'value_count')
+
+    @property
+    def cardinality(self):
+        return MetricAggregator(self._field, 'cardinality')
+
+    distinct_count = cardinality
+
+    @property
+    def percentiles(self):
+        return MetricAggregator(self._field, 'percentiles')
+
+    @property
+    def percentile_ranks(self):
+        return MetricAggregator(self._field, 'percentile_ranks')
 
 
 class Row(tuple):
@@ -65,104 +103,5 @@ class Row(tuple):
     def __repr__(self):
         return 'Row({0})'.format(','.join(['{0}={1}'.format(k, repr(v)) for k, v in zip(self._fields, tuple(self))]))
 
-
-# Es filter builder for BooleanCond
-class BooleanCond(object):
-    def __init__(self, *args):
-        self._filter = None
-
-    def __and__(self, x):
-        # Combine results
-        if isinstance(self, And):
-            self.subtree['must'].append(x.subtree)
-            return self
-        elif isinstance(x, And):
-            x.subtree['must'].append(self.subtree)
-            return x
-        return And(self, x)
-
-    def __or__(self, x):
-        # Combine results
-        if isinstance(self, Or):
-            self.subtree['should'].append(x.subtree)
-            return self
-        elif isinstance(x, Or):
-            x.subtree['should'].append(self.subtree)
-            return x
-        return Or(self, x)
-
-    def __invert__(self):
-        return Not(self)
-
-    @property
-    def subtree(self):
-        if 'bool' in self._filter:
-            return self._filter['bool']
-        else:
-            return self._filter
-
-    def build(self):
-        return self._filter
-
-    def debug_string(self, indent=4):
-        return json.dumps(self._filter, indent=indent)
-
-
-# Binary operator
-class And(BooleanCond):
-    def __init__(self, *args):
-        [isinstance(x, BooleanCond) for x in args]
-        super(And, self).__init__()
-        self._filter = {'bool': {'must': [x.build() for x in args]}}
-
-
-class Or(BooleanCond):
-    def __init__(self, *args):
-        [isinstance(x, BooleanCond) for x in args]
-        super(Or, self).__init__()
-        self._filter = {'bool': {'should': [x.build() for x in args]}}
-
-
-class Not(BooleanCond):
-    def __init__(self, x):
-        assert isinstance(x, BooleanCond)
-        super(Not, self).__init__()
-        self._filter = {'bool': {'must_not': x.build()}}
-
-
-# Leaves
-class GreaterEqual(BooleanCond):
-    def __init__(self, dim, value):
-        super(GreaterEqual, self).__init__()
-        self._filter = {'range': {dim: {'gte': value}}}
-
-
-class Greater(BooleanCond):
-    def __init__(self, dim, value):
-        super(Greater, self).__init__()
-        self._filter = {'range': {dim: {'gt': value}}}
-
-
-class LessEqual(BooleanCond):
-    def __init__(self, dim, value):
-        super(LessEqual, self).__init__()
-        self._filter = {'range': {dim: {'lte': value}}}
-
-
-class Less(BooleanCond):
-    def __init__(self, dim, value):
-        super(Less, self).__init__()
-        self._filter = {'range': {dim: {'lt': value}}}
-
-
-class Equal(BooleanCond):
-    def __init__(self, dim, value):
-        super(Equal, self).__init__()
-        self._filter = {'term': {dim: value}}
-
-
-class IsIn(BooleanCond):
-    def __init__(self, dim, value):
-        super(IsIn, self).__init__()
-        assert isinstance(value, list)
-        self._filter = {'terms': {dim: value}}
+    def as_dict(self):
+        return dict((x, y) for x, y in zip(self._fields, self))

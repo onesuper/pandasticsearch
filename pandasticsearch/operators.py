@@ -1,0 +1,150 @@
+_metric_aggs = ('avg', 'min', 'max', 'cardinality', 'value_count',
+                'percentiles', 'percentile_ranks')
+
+_sort_mode = ('min', 'max', 'sum', 'avg', 'median')
+
+
+class Aggregator(object):
+    def __init__(self, field):
+        self._field = field
+
+    def build(self):
+        pass
+
+
+class MetricAggregator(Aggregator):
+    def __init__(self, field, agg_type, metric_rename=None, params=None):
+        super(MetricAggregator, self).__init__(field)
+        self._type = agg_type
+        self._metric_rename = metric_rename
+        self._params = params
+
+    def build(self):
+        if self._type not in _metric_aggs:
+            raise Exception('Not support metric aggregator: {0}'.format(agg_type))
+
+        if self._metric_rename is None:
+            name = '{0}({1})'.format(self._type, self._field)
+        else:
+            name = self._metric_rename
+
+        agg_field = dict()
+        agg_field['field'] = self._field
+        if self._params is not None:
+            agg_field.update(self._params)
+        return {name: {self._type: agg_field}}
+
+
+class Sorter(object):
+    def __init__(self, field, order='desc', mode=None):
+        self._field = field
+        self._order = order
+        self._mode = mode
+
+    def build(self):
+        sort = {}
+        if self._mode is not None:
+            if self._mode not in _sort_mode:
+                raise Exception('Not support sort mode: {0}'.format(mode))
+            sort['mode'] = self._mode
+        sort['order'] = self._order
+        return {self._field: sort}
+
+
+# Es filter builder for BooleanCond
+class BooleanFilter(object):
+    def __init__(self, *args):
+        self._filter = None
+
+    def __and__(self, x):
+        # Combine results
+        if isinstance(self, AndFilter):
+            self.subtree['must'].append(x.subtree)
+            return self
+        elif isinstance(x, AndFilter):
+            x.subtree['must'].append(self.subtree)
+            return x
+        return AndFilter(self, x)
+
+    def __or__(self, x):
+        # Combine results
+        if isinstance(self, OrFilter):
+            self.subtree['should'].append(x.subtree)
+            return self
+        elif isinstance(x, OrFilter):
+            x.subtree['should'].append(self.subtree)
+            return x
+        return OrFilter(self, x)
+
+    def __invert__(self):
+        return NotFilter(self)
+
+    @property
+    def subtree(self):
+        if 'bool' in self._filter:
+            return self._filter['bool']
+        else:
+            return self._filter
+
+    def build(self):
+        return self._filter
+
+
+# Binary operator
+class AndFilter(BooleanFilter):
+    def __init__(self, *args):
+        [isinstance(x, BooleanFilter) for x in args]
+        super(AndFilter, self).__init__()
+        self._filter = {'bool': {'must': [x.build() for x in args]}}
+
+
+class OrFilter(BooleanFilter):
+    def __init__(self, *args):
+        [isinstance(x, BooleanFilter) for x in args]
+        super(OrFilter, self).__init__()
+        self._filter = {'bool': {'should': [x.build() for x in args]}}
+
+
+class NotFilter(BooleanFilter):
+    def __init__(self, x):
+        assert isinstance(x, BooleanFilter)
+        super(NotFilter, self).__init__()
+        self._filter = {'bool': {'must_not': x.build()}}
+
+
+# LeafBooleanFilter
+class GreaterEqual(BooleanFilter):
+    def __init__(self, field, value):
+        super(GreaterEqual, self).__init__()
+        self._filter = {'range': {field: {'gte': value}}}
+
+
+class Greater(BooleanFilter):
+    def __init__(self, field, value):
+        super(Greater, self).__init__()
+        self._filter = {'range': {field: {'gt': value}}}
+
+
+class LessEqual(BooleanFilter):
+    def __init__(self, field, value):
+        super(LessEqual, self).__init__()
+        self._filter = {'range': {field: {'lte': value}}}
+
+
+class Less(BooleanFilter):
+    def __init__(self, field, value):
+        super(Less, self).__init__()
+        self._filter = {'range': {field: {'lt': value}}}
+
+
+class Equal(BooleanFilter):
+    def __init__(self, field, value):
+        super(Equal, self).__init__()
+        self._filter = {'term': {field: value}}
+
+
+class IsIn(BooleanFilter):
+    def __init__(self, field, value):
+        super(IsIn, self).__init__()
+        assert isinstance(value, list)
+        self._filter = {'terms': {field: value}}

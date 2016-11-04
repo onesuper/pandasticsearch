@@ -1,7 +1,7 @@
 from pandasticsearch.client import RestClient
 from pandasticsearch.queries import Agg, Select
-from pandasticsearch.aggregators import Aggregator, CountStar
-from pandasticsearch.types import Column, BooleanCond
+from pandasticsearch.operators import *
+from pandasticsearch.types import Column
 from pandasticsearch.types import Row
 
 import json
@@ -41,6 +41,7 @@ class DataFrame(object):
         self._mapping = mapping
         self._filter = kwargs.get('filter', None)
         self._aggregation = kwargs.get('aggregation', None)
+        self._sort = kwargs.get('sort', None)
         self._projection = kwargs.get('projection', None)
         self._limit = kwargs.get('limit', None)
         self._last_query = None
@@ -84,7 +85,7 @@ class DataFrame(object):
             if item not in self._columns:
                 raise TypeError('Column does not exist: [{0}]'.format(item))
             return Column(item)
-        elif isinstance(item, BooleanCond):
+        elif isinstance(item, BooleanFilter):
             self._filter = item.build()
             return self
         else:
@@ -101,11 +102,12 @@ class DataFrame(object):
         >>> df.filter(df['age'] < 13).collect()
         [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
         """
-        assert isinstance(condition, BooleanCond)
+        assert isinstance(condition, BooleanFilter)
         return DataFrame(self._client, self._mapping,
                          filter=condition.build(),
                          aggregation=self._aggregation,
                          projection=self._projection,
+                         sort=self._sort,
                          limit=self._limit)
 
     where = filter
@@ -124,6 +126,7 @@ class DataFrame(object):
                          filter=self._filter,
                          aggregation=self._aggregation,
                          projection=project,
+                         sort=self._sort,
                          limit=self._limit)
 
     def limit(self, num):
@@ -136,6 +139,7 @@ class DataFrame(object):
                          filter=self._filter,
                          aggregation=self._aggregation,
                          projection=self._projection,
+                         sort=self._sort,
                          limit=num)
 
     def agg(self, *aggs):
@@ -154,7 +158,31 @@ class DataFrame(object):
                          filter=self._filter,
                          aggregation=aggregation,
                          projection=self._projection,
+                         sort=self._sort,
                          limit=self._limit)
+
+    def sort(self, *cols):
+        """Returns a new :class:`DataFrame` sorted by the specified column(s).
+
+        :param cols: list of :class:`Column`to sort by.
+
+        orderby() is an alias for sort().
+
+        >>> df.sort(df['age'].asc).collect()
+        [Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+        """
+        sorts = []
+        for col in cols:
+            assert isinstance(col, Sorter)
+            sorts.append(col.build())
+
+        return DataFrame(self._client, self._mapping,
+                         filter=self._filter,
+                         aggregation=self._aggregation,
+                         sort=sorts,
+                         projection=self._projection,
+                         limit=self._limit)
+    orderby = sort
 
     def _execute(self):
         res_dict = self._client.post(data=self._build_query())
@@ -194,7 +222,7 @@ class DataFrame(object):
         >>> df.count()
         2
         """
-        _df = self.agg(CountStar())
+        _df = self.agg(MetricAggregator('_index', 'value_count'))
         return _df.collect()[0]['count(*)']
 
     def show(self, n=10):
@@ -314,5 +342,7 @@ class DataFrame(object):
         if self._projection:
             query['_source'] = self._projection
 
+        if self._sort:
+            query['sort'] = self._sort
         self._last_query = query
         return query

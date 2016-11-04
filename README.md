@@ -25,17 +25,21 @@ It is type-safe, easy-to-use and Pandas-flavored.
 from pandasticsearch import DataFrame
 df = DataFrame.from_es('http://localhost:9200', index='people')
 
-# Inspect the columns
-df.columns
-#['name', 'age', 'gender']
-
-# Print the schema of the index
+# Print the schema(mapping) of the index
 df.printSchema()
 # company
 # |-- employee
 #   |-- name: {'index': 'not_analyzed', 'type': 'string'}
 #   |-- age: {'type': 'integer'}
 #   |-- gender: {'index': 'not_analyzed', 'type': 'string'}
+
+# Inspect the columns
+df.columns
+#['name', 'age', 'gender']
+
+# Get the column
+df['name']
+# Column('name')
 
 # Filter
 df.filter(df['age'] < 13).collect()
@@ -56,9 +60,12 @@ df.filter(df['age'] < 25).select('name').show(3)
 # +------+
 
 # Aggregation
-from pandasticsearch import Avg
-df[df['gender'] == 'male'].agg(Avg('age')).collect()
+df[df['gender'] == 'male'].agg(df['age'].avg).collect()
 # [Row(avg(age)=12)]
+
+# Sort
+df.sort(df['age'].asc).select('name', 'age').collect()
+#[Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
 
 # Convert to Pandas object for subsequent analysis
 df[df['gender'] == 'male'].agg(Avg('age')).to_pandas()
