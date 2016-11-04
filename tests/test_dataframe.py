@@ -4,10 +4,11 @@ from mock import patch, Mock
 import json
 from pandasticsearch.dataframe import DataFrame, Column
 from pandasticsearch.types import Greater, BooleanCond
+from pandasticsearch.aggregators import Avg
 
 
 @patch('pandasticsearch.client.urllib.request.urlopen')
-def create_ps(mock_urlopen):
+def create_df_from_es(mock_urlopen):
     response = Mock()
     dic = {"index": {"mappings": {"type": {"properties": {"a": {"type": "integer"}}}}}}
     response.read.return_value = json.dumps(dic).encode("utf-8")
@@ -17,7 +18,7 @@ def create_ps(mock_urlopen):
 
 class TestDataframe(unittest.TestCase):
     def test_getitem(self):
-        ps = create_ps()
+        ps = create_df_from_es()
         self.assertTrue(isinstance(ps['a'], Column))
 
         expr = ps['a'] > 2
@@ -26,15 +27,38 @@ class TestDataframe(unittest.TestCase):
         self.assertEqual(ps[expr]._filter, {'range': {'a': {'gt': 2}}})
 
     def test_columns(self):
-        ps = create_ps()
-        self.assertEqual(ps.columns, ['a'])
+        df = create_df_from_es()
+        self.assertEqual(df.columns, ['a'])
 
     def test_filter(self):
-        ps = create_ps()
+        df = create_df_from_es()
 
-        self.assertEqual((ps.filter(ps['a'] > 2))._filter, {'range': {'a': {'gt': 2}}})
-        self.assertEqual(ps.where(Greater('a', 2))._filter, {'range': {'a': {'gt': 2}}})
+        self.assertEqual((df.filter(df['a'] > 2)).to_dict(),
+                         {'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}}, 'size': 20})
+        self.assertEqual(df.where(Greater('a', 2)).to_dict(),
+                         {'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}}, 'size': 20})
 
+    def test_agg(self):
+        df = create_df_from_es()
+        self.assertEqual((df.agg(Avg('a'))).to_dict(),
+                         {'aggregations': {'avg(a)': {'avg': {'field': 'a'}}}, 'size': 0})
+
+    def test_select(self):
+        df = create_df_from_es()
+        self.assertEqual(df.select('a').to_dict(),
+                         {'_source': {'excludes': [], 'includes': ('a',)}, 'size': 20})
+
+    def test_limit(self):
+        df = create_df_from_es()
+        self.assertEqual(df.limit(199).to_dict(), {'size': 199})
+
+    def test_complex(self):
+        df = create_df_from_es()
+        self.assertEqual(df.filter(df['a'] > 2).agg(Avg('a')).select('a').limit(1).to_dict(),
+                         {'_source': {'excludes': [], 'includes': ('a',)},
+                          'aggregations': {'avg(a)': {'avg': {'field': 'a'}}},
+                          'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}},
+                          'size': 0})
 
 if __name__ == '__main__':
     unittest.main()
