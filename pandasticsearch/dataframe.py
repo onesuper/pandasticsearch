@@ -12,9 +12,14 @@ import sys
 class DataFrame(object):
     """
     A :class:`DataFrame` treats index and documents in Elasticsearch as named columns and rows.
+    It can be converted to Pandas object for subsequent analysis.
 
     >>> from pandasticsearch import DataFrame
     >>> df = DataFrame.from_es('http://localhost:9200', index='company')
+
+    Create a DataFrame object
+    >>> from pandasticsearch import DataFrame
+    >>> df = DataFrame.from_es('http://localhost:9200', index='people')
     """
 
     def __init__(self, client, mapping, **kwargs):
@@ -41,25 +46,33 @@ class DataFrame(object):
         self._last_query = None
 
     @staticmethod
-    def from_es(url, index, type=None):
+    def from_es(url, index, doc_type=None):
+        """
+        Creates an :class:`DataFrame` object by providing the URL of ElasticSearch node and the name of the index.
+
+        :param str url: URL of the node connected to
+        :param str index: The name of the index
+        :param str doc_type: The type of the document
+        :return: DataFrame object for accessing
+        :rtype: DataFrame
+        """
         # get mapping structure from server
-        if type is None:
+        if doc_type is None:
             mapping_endpoint = index
         else:
-            mapping_endpoint = index + '/_mapping/' + type
+            mapping_endpoint = index + '/_mapping/' + doc_type
 
         mapping = RestClient(url, mapping_endpoint).get()
 
-        if type is None:
+        if doc_type is None:
             endpoint = index + '/_search'
         else:
-            endpoint = index + '/' + type + '/_search'
+            endpoint = index + '/' + doc_type + '/_search'
         return DataFrame(RestClient(url, endpoint), mapping)
 
     def __getattr__(self, name):
-        """Returns the :class:`Column` denoted by ``name``.
-        >>> df.select(df.age).collect()
-        [Row(age=2), Row(age=5)]
+        """
+        Returns the :class:`Column` denoted by ``name``.
         """
         if name not in self.columns:
             raise AttributeError(
@@ -84,6 +97,9 @@ class DataFrame(object):
         where() is an alias for filter().
 
         :param condition: BooleanCond object
+
+        >>> df.filter(df['age'] < 13).collect()
+        [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
         """
         assert isinstance(condition, BooleanCond)
         return DataFrame(self._client, self._mapping,
@@ -99,6 +115,9 @@ class DataFrame(object):
         Projects a set of columns and returns a new L{DataFrame}
 
         :param cols: list of column names or L{Column}.
+
+        >>> df.filter(df['age'] < 25).select('name', 'age').collect()
+        [Row(age=12,name='Alice'), Row(age=11,name='Bob'), Row(age=13,name='Leo')]
         """
         project = {"includes": cols, "excludes": []}
         return DataFrame(self._client, self._mapping,
@@ -123,6 +142,9 @@ class DataFrame(object):
         """
         Aggregate on the entire DataFrame without groups.
         :param aggs: aggregate functions
+
+        >>> df[df['gender'] == 'male'].agg(Avg('age')).collect()
+        [Row(avg(age)=12)]
         """
         aggregation = {}
         for agg in aggs:
@@ -145,10 +167,11 @@ class DataFrame(object):
     def collect(self):
         """
         Returns all the records as a list of Row.
-        >>> df.collect()
-        [Row(age=2, name='Alice'), Row(age=5, name='Bob')]
 
         :return: list of L{Row}
+
+        >>> df.collect()
+        [Row(age=2, name='Alice'), Row(age=5, name='Bob')]
         """
         query = self._execute()
         return [Row(**v) for v in query.result]
@@ -157,6 +180,10 @@ class DataFrame(object):
         """
         Export to a Pandas DataFrame object.
         :return: The DataFrame representing the query result
+
+        >>> df[df['gender'] == 'male'].agg(Avg('age')).to_pandas()
+            avg(age)
+        0        12
         """
         query = self._execute()
         return query.to_pandas()
@@ -175,6 +202,15 @@ class DataFrame(object):
         Prints the first ``n`` rows to the console.
 
         :param n:  Number of rows to show.
+
+        >>> df.filter(df['age'] < 25).select('name').show(3)
+        +------+
+        | name |
+        +------+
+        | Alice|
+        | Bob  |
+        | Leo  |
+        +------+
         """
         assert n > 0
         query = self._execute()
@@ -220,11 +256,16 @@ class DataFrame(object):
         sys.stdout.write(json.dumps(self._build_query(), indent=4))
 
     def to_dict(self):
+        """
+        Converts the current :class:`DataFrame` to Elasticsearch search dictionary.
+        :return: a dictionary which obeys the Elasticsearch RESTful protocol
+        """
         return self._build_query()
 
     def print_schema(self):
         """
         Prints out the schema in the tree format.
+
         >>> df.print_schema()
         index_name
         |-- type_name
@@ -245,6 +286,7 @@ class DataFrame(object):
         """
         Returns all column names as a list.
         :return: column names as a list
+
         >>> df.columns
         ['age', 'name']
         """

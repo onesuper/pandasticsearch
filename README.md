@@ -29,8 +29,7 @@ df = DataFrame.from_es('http://localhost:9200', index='people')
 df.columns
 #['name', 'age', 'gender']
 
-
-# print the schema of the index
+# Print the schema of the index
 df.printSchema()
 # company
 # |-- employee
@@ -38,15 +37,15 @@ df.printSchema()
 #   |-- age: {'type': 'integer'}
 #   |-- gender: {'index': 'not_analyzed', 'type': 'string'}
 
-# filter
+# Filter
 df.filter(df['age'] < 13).collect()
 # [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
 
-# projection
+# Projection
 df.filter(df['age'] < 25).select('name', 'age').collect()
 # [Row(age=12,name='Alice'), Row(age=11,name='Bob'), Row(age=13,name='Leo')]
 
-# print the rows into console
+# Print the rows into console
 df.filter(df['age'] < 25).select('name').show(3)
 # +------+
 # | name |
@@ -56,16 +55,15 @@ df.filter(df['age'] < 25).select('name').show(3)
 # | Leo  |
 # +------+
 
-# aggregation
+# Aggregation
 from pandasticsearch import Avg
 df[df['gender'] == 'male'].agg(Avg('age')).collect()
 # [Row(avg(age)=12)]
 
-# convert to Pandas object for subsequent analysis
+# Convert to Pandas object for subsequent analysis
 df[df['gender'] == 'male'].agg(Avg('age')).to_pandas()
 #    avg(age)
 # 0        12
-
 
 ```
 

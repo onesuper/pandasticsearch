@@ -4,17 +4,6 @@ import pandas
 
 
 class Query(collections.MutableSequence):
-    """
-    Query objects are produced by Elasticsearch clients and can be used
-    for exporting query results into pandas.DataFrame objects for subsequent analysis.
-
-    >>> query.result
-    [{'age': 12, 'name': 'Alice'}]
-
-    The original JSON returned by Elasticsearch server can be retrieved as well:
-    >>> query.json
-    """
-
     def __init__(self):
         super(Query, self).__init__()
         self._values = None
@@ -28,19 +17,10 @@ class Query(collections.MutableSequence):
     def to_pandas(self):
         """
         Export the current query result to a Pandas DataFrame object.
-        :return: The DataFrame representing the query result
-        :rtype: DataFrame
-        :raise: NotImplementedError
         """
         raise NotImplementedError('implemented in subclass')
 
     def print_json(self):
-        """
-        Prettify the result (requires pygements package)
-        :return: The formatted string
-        :rtype: string
-        :raise: ImportError
-        """
         indented_json = json.dumps(self._result_dict, sort_keys=True, separators=(',', ': '), indent=4,
                                    ensure_ascii=False)
         print(indented_json)
