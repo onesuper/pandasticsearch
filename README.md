@@ -12,7 +12,7 @@ To install:
 pip3 install pandasticsearch
 ```
 
-## Connect to ES
+## Usage
 
 ### High Level API
 
@@ -35,8 +35,8 @@ company
   |-- gender: {'index': 'not_analyzed', 'type': 'string'}
 
 # filter
->>> df.filter(df['age'] < 25).collect()
-[Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob'), Row(age=13,gender='male',name='Leo')]
+>>> df.filter(df['age'] < 13).collect()
+[Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
 
 # projection
 >>> df.filter(df['age'] < 25).select('name', 'age').collect()
@@ -64,32 +64,13 @@ company
 ```
 
 
-### RestClient
-
-A `RestClient` talks to default Elasticsearch Rest API:
-
-```python
->>> from pandasticsearch import RestClient, Select
->>> client = RestClient('http://localhost:9200', 'recruit/resume/_search')
->>> result_dict = client.post("query":{"match_all":{}}})
->>> Select.from_dict(result_dict)
-Select: 3 rows
-```
-
-It can also talk to [Elasticsearch-SQL](https://github.com/NLPchina/elasticsearch-sql):
-
-```python
->>> client = RestClient('http://localhost:9200', '_sql')
->>> result_dict = client.post(params={'sql': 'select * from table_name limit 3'})
->>> Select.from_dict(result_dict)
-Select: 3 rows
-```
 
 ### Use with Another Python Client
 
 Pandasticsearch can also be used with another full featured Python client:
 
 * [elasticsearch-py](https://github.com/elastic/elasticsearch-py) (Official)
+* [Elasticsearch-SQL](https://github.com/NLPchina/elasticsearch-sql)
 * [pyelasticsearch](https://github.com/pyelasticsearch/pyelasticsearch)
 * [pyes](https://github.com/aparo/pyes)
 

@@ -14,13 +14,26 @@ class DataFrame(object):
     A :class:`DataFrame` treats index and documents in Elasticsearch as named columns and rows.
 
     >>> from pandasticsearch import DataFrame
-    >>> df = DataFrame('http://localhost:9200', index='company')
+    >>> df = DataFrame.from_es('http://localhost:9200', index='company')
     """
 
-    def __init__(self, client, columns, schema, **kwargs):
+    def __init__(self, client, mapping, **kwargs):
+        cols = []
+        for index, mappings in six.iteritems(mapping):
+            self._index = index
+            for _, properties in six.iteritems(mappings['mappings']):
+                for k, _ in six.iteritems(properties['properties']):
+                    cols.append(k)
+
+        if self._index is None:
+            raise Exception('No index in [{0}]'.format(mapping))
+
+        if len(cols) == 0:
+            raise Exception('0 columns found in [{0}]'.format(self._index))
+
         self._client = client
-        self._columns = columns
-        self._schema = schema
+        self._columns = cols
+        self._mapping = mapping
         self._filter = kwargs.get('filter', None)
         self._aggregation = kwargs.get('aggregation', None)
         self._projection = kwargs.get('projection', None)
@@ -29,28 +42,19 @@ class DataFrame(object):
 
     @staticmethod
     def from_es(url, index, type=None):
-        # setup the columns(properties)
+        # get mapping structure from server
         if type is None:
             mapping_endpoint = index
         else:
             mapping_endpoint = index + '/_mapping/' + type
 
-        schema = RestClient(url, mapping_endpoint).get()
-
-        cols = []
-        for _, mappings in six.iteritems(schema):
-            for _, properties in six.iteritems(mappings['mappings']):
-                for k, _ in six.iteritems(properties['properties']):
-                    cols.append(k)
-
-        if len(cols) == 0:
-            raise Exception('0 columns found in [{0}]'.format(index))
+        mapping = RestClient(url, mapping_endpoint).get()
 
         if type is None:
             endpoint = index + '/_search'
         else:
             endpoint = index + '/' + type + '/_search'
-        return DataFrame(RestClient(url, endpoint), cols, schema)
+        return DataFrame(RestClient(url, endpoint), mapping)
 
     def __getattr__(self, name):
         """Returns the :class:`Column` denoted by ``name``.
@@ -82,7 +86,7 @@ class DataFrame(object):
         :param condition: BooleanCond object
         """
         assert isinstance(condition, BooleanCond)
-        return DataFrame(self._client, self._columns, self._schema,
+        return DataFrame(self._client, self._mapping,
                          filter=condition.build(),
                          aggregation=self._aggregation,
                          projection=self._projection,
@@ -97,7 +101,7 @@ class DataFrame(object):
         :param cols: list of column names or L{Column}.
         """
         project = {"includes": cols, "excludes": []}
-        return DataFrame(self._client, cols, self._schema,
+        return DataFrame(self._client, self._mapping,
                          filter=self._filter,
                          aggregation=self._aggregation,
                          projection=project,
@@ -109,7 +113,7 @@ class DataFrame(object):
         """
         assert isinstance(num, int)
         assert num >= 1
-        return DataFrame(self._client, self._columns, self._schema,
+        return DataFrame(self._client, self._mapping,
                          filter=self._filter,
                          aggregation=self._aggregation,
                          projection=self._projection,
@@ -124,11 +128,19 @@ class DataFrame(object):
         for agg in aggs:
             assert isinstance(agg, Aggregator)
             aggregation.update(agg.build())
-        return DataFrame(self._client, self._columns, self._schema,
+        return DataFrame(self._client, self._mapping,
                          filter=self._filter,
                          aggregation=aggregation,
                          projection=self._projection,
                          limit=self._limit)
+
+    def _execute(self):
+        res_dict = self._client.post(data=self._build_query())
+        if self._aggregation is not None:
+            query = Agg.from_dict(res_dict)
+        else:
+            query = Select.from_dict(res_dict)
+        return query
 
     def collect(self):
         """
@@ -138,12 +150,7 @@ class DataFrame(object):
 
         :return: list of L{Row}
         """
-        res_dict = self._client.post(data=self._build_query())
-        if self._aggregation is not None:
-            query = Agg.from_dict(res_dict)
-        else:
-            query = Select.from_dict(res_dict)
-
+        query = self._execute()
         return [Row(**v) for v in query.result]
 
     def to_pandas(self):
@@ -151,11 +158,7 @@ class DataFrame(object):
         Export to a Pandas DataFrame object.
         :return: The DataFrame representing the query result
         """
-        res_dict = self._client.post(data=self._build_query())
-        if self._aggregation is not None:
-            query = Agg.from_dict(res_dict)
-        else:
-            query = Select.from_dict(res_dict)
+        query = self._execute()
         return query.to_pandas()
 
     def count(self):
@@ -164,7 +167,8 @@ class DataFrame(object):
         >>> df.count()
         2
         """
-        return self.agg(CountStar())[0]['count(*)']
+        _df = self.agg(CountStar())
+        return _df.collect()[0]['count(*)']
 
     def show(self, n=10):
         """
@@ -173,12 +177,7 @@ class DataFrame(object):
         :param n:  Number of rows to show.
         """
         assert n > 0
-        res_dict = self._client.post(data=self._build_query())
-        if self._aggregation is not None:
-            query = Agg.from_dict(res_dict)
-        else:
-            query = Select.from_dict(res_dict)
-
+        query = self._execute()
         cols = self._columns
         widths = []
         tavnit = '|'
@@ -231,7 +230,7 @@ class DataFrame(object):
           |-- mobile :  {'index': 'not_analyzed', 'type': 'string'}
           |-- regions :  {'index': 'not_analyzed', 'type': 'string'}
         """
-        for index, mappings in six.iteritems(self._schema):
+        for index, mappings in six.iteritems(self._mapping):
             sys.stdout.write('{0}\n'.format(index))
             for typ, properties in six.iteritems(mappings['mappings']):
                 sys.stdout.write('|--{0}\n'.format(typ))
@@ -250,7 +249,7 @@ class DataFrame(object):
 
     @property
     def schema(self):
-        return self._schema
+        return self._mapping
 
     def _build_query(self):
         query = {}
