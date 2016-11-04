@@ -1,4 +1,4 @@
-from pandasticsearch.filters import *
+import json
 
 
 class Column(object):
@@ -64,3 +64,105 @@ class Row(tuple):
 
     def __repr__(self):
         return 'Row({0})'.format(','.join(['{0}={1}'.format(k, repr(v)) for k, v in zip(self._fields, tuple(self))]))
+
+
+# Es filter builder for BooleanCond
+class BooleanCond(object):
+    def __init__(self, *args):
+        self._filter = None
+
+    def __and__(self, x):
+        # Combine results
+        if isinstance(self, And):
+            self.subtree['must'].append(x.subtree)
+            return self
+        elif isinstance(x, And):
+            x.subtree['must'].append(self.subtree)
+            return x
+        return And(self, x)
+
+    def __or__(self, x):
+        # Combine results
+        if isinstance(self, Or):
+            self.subtree['should'].append(x.subtree)
+            return self
+        elif isinstance(x, Or):
+            x.subtree['should'].append(self.subtree)
+            return x
+        return Or(self, x)
+
+    def __invert__(self):
+        return Not(self)
+
+    @property
+    def subtree(self):
+        if 'bool' in self._filter:
+            return self._filter['bool']
+        else:
+            return self._filter
+
+    def build(self):
+        return self._filter
+
+    def debug_string(self, indent=4):
+        return json.dumps(self._filter, indent=indent)
+
+
+# Binary operator
+class And(BooleanCond):
+    def __init__(self, *args):
+        [isinstance(x, BooleanCond) for x in args]
+        super(And, self).__init__()
+        self._filter = {'bool': {'must': [x.build() for x in args]}}
+
+
+class Or(BooleanCond):
+    def __init__(self, *args):
+        [isinstance(x, BooleanCond) for x in args]
+        super(Or, self).__init__()
+        self._filter = {'bool': {'should': [x.build() for x in args]}}
+
+
+class Not(BooleanCond):
+    def __init__(self, x):
+        assert isinstance(x, BooleanCond)
+        super(Not, self).__init__()
+        self._filter = {'bool': {'must_not': x.build()}}
+
+
+# Leaves
+class GreaterEqual(BooleanCond):
+    def __init__(self, dim, value):
+        super(GreaterEqual, self).__init__()
+        self._filter = {'range': {dim: {'gte': value}}}
+
+
+class Greater(BooleanCond):
+    def __init__(self, dim, value):
+        super(Greater, self).__init__()
+        self._filter = {'range': {dim: {'gt': value}}}
+
+
+class LessEqual(BooleanCond):
+    def __init__(self, dim, value):
+        super(LessEqual, self).__init__()
+        self._filter = {'range': {dim: {'lte': value}}}
+
+
+class Less(BooleanCond):
+    def __init__(self, dim, value):
+        super(Less, self).__init__()
+        self._filter = {'range': {dim: {'lt': value}}}
+
+
+class Equal(BooleanCond):
+    def __init__(self, dim, value):
+        super(Equal, self).__init__()
+        self._filter = {'term': {dim: value}}
+
+
+class IsIn(BooleanCond):
+    def __init__(self, dim, value):
+        super(IsIn, self).__init__()
+        assert isinstance(value, list)
+        self._filter = {'terms': {dim: value}}

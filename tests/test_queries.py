@@ -2,7 +2,6 @@
 import unittest
 
 from pandasticsearch.queries import Select, Agg
-from pandasticsearch.types import Row
 
 
 def create_hits():
@@ -27,11 +26,6 @@ class TestQueries(unittest.TestCase):
 
         self.assertIsNotNone(select.result)
         self.assertEqual(len(select), 3)
-
-    def test_collect(self):
-        query = Select()
-        query._values = [{'a': 1}, {'a': 2}]
-        self.assertEqual(query.collect(), [Row(a=1), Row(a=2)])
 
     def test_select_from_dict(self):
         select = Select.from_dict(create_hits())

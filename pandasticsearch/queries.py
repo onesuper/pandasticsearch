@@ -2,18 +2,14 @@ import collections
 import json
 import pandas
 
-from pandasticsearch.types import Row
-from pandasticsearch.errors import NoSuchDependencyException
-
 
 class Query(collections.MutableSequence):
     """
     Query objects are produced by Elasticsearch clients and can be used
     for exporting query results into pandas.DataFrame objects for subsequent analysis.
 
-    It also provides some methods for basic data exploring:
-    >>> query.collect()
-    [Row(age=2, name='Alice'), Row(age=5, name='Bob')]
+    >>> query.result
+    [{'age': 12, 'name': 'Alice'}]
 
     The original JSON returned by Elasticsearch server can be retrieved as well:
     >>> query.json
@@ -53,9 +49,6 @@ class Query(collections.MutableSequence):
     def result(self):
         return self._values
 
-    def collect(self):
-        return [Row(**v) for v in self._values]
-
     @property
     def json(self):
         """
@@ -90,10 +83,6 @@ class Query(collections.MutableSequence):
 class Select(Query):
     def __init__(self):
         super(Select, self).__init__()
-
-    def __repr__(self):
-        rows = [Row(**v) for v in self._values]
-        return '\n'.join([repr(r) for r in rows])
 
     def explain_result(self, result=None):
         super(Select, self).explain_result(result)
@@ -131,8 +120,9 @@ class Agg(Query):
                 self._indexes.append(index)
 
     def to_pandas(self):
+        print(self._indexes, self._values)
         if self._values is not None:
-            if self._indexes is not None:
+            if len(self._indexes) > 0:
                 index = pandas.MultiIndex.from_tuples(self._indexes, names=self._index_names)
                 df = pandas.DataFrame(data=self._values, index=index)
             else:
