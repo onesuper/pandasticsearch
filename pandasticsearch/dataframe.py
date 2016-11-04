@@ -219,6 +219,9 @@ class DataFrame(object):
         """
         sys.stdout.write(json.dumps(self._build_query(), indent=4))
 
+    def to_dict(self):
+        return self._build_query()
+
     def print_schema(self):
         """
         Prints out the schema in the tree format.

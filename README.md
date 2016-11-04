@@ -18,49 +18,55 @@ pip3 install pandasticsearch
 
 A `DataFrame` object accesses Elasticsearch with high level API, like [elasticsearch-dsl-py](https://github.com/elastic/elasticsearch-dsl-py).
 
-
 It is type-safe, easy-to-use and Pandas-flavored.
 
 ```python
-# create a DataFrame object
->>> from pandasticsearch import DataFrame
->>> df = DataFrame.from_es('http://localhost:9200', index='people')
->>> df.columns
-['name', 'age', 'gender']
->>> df.printSchema()
-company
-|-- employee
-  |-- name: {'index': 'not_analyzed', 'type': 'string'}
-  |-- age: {'type': 'integer'}
-  |-- gender: {'index': 'not_analyzed', 'type': 'string'}
+# Create a DataFrame object
+from pandasticsearch import DataFrame
+df = DataFrame.from_es('http://localhost:9200', index='people')
+
+# Inspect the columns
+df.columns
+#['name', 'age', 'gender']
+
+
+# print the schema of the index
+df.printSchema()
+# company
+# |-- employee
+#   |-- name: {'index': 'not_analyzed', 'type': 'string'}
+#   |-- age: {'type': 'integer'}
+#   |-- gender: {'index': 'not_analyzed', 'type': 'string'}
 
 # filter
->>> df.filter(df['age'] < 13).collect()
-[Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
+df.filter(df['age'] < 13).collect()
+# [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
 
 # projection
->>> df.filter(df['age'] < 25).select('name', 'age').collect()
-[Row(age=12,name='Alice'), Row(age=11,name='Bob'), Row(age=13,name='Leo')]
+df.filter(df['age'] < 25).select('name', 'age').collect()
+# [Row(age=12,name='Alice'), Row(age=11,name='Bob'), Row(age=13,name='Leo')]
 
 # print the rows into console
->>> df.filter(df['age'] < 25).select('name').show(3)
-+------+
-| name |
-+------+
-| Alice|
-| Bob  |
-| Leo  |
-+------+
+df.filter(df['age'] < 25).select('name').show(3)
+# +------+
+# | name |
+# +------+
+# | Alice|
+# | Bob  |
+# | Leo  |
+# +------+
 
 # aggregation
->>> from pandasticsearch import Avg
->>> df[df['gender'] == 'male'].agg(Avg('age')).collect()
-[Row(avg(age)=12)]
+from pandasticsearch import Avg
+df[df['gender'] == 'male'].agg(Avg('age')).collect()
+# [Row(avg(age)=12)]
 
 # convert to Pandas object for subsequent analysis
->>> df[df['gender'] == 'male'].agg(Avg('age')).to_pandas()
-   avg(age)
-0        12
+df[df['gender'] == 'male'].agg(Avg('age')).to_pandas()
+#    avg(age)
+# 0        12
+
+
 ```
 
 
@@ -74,12 +80,24 @@ Pandasticsearch can also be used with another full featured Python client:
 * [pyelasticsearch](https://github.com/pyelasticsearch/pyelasticsearch)
 * [pyes](https://github.com/aparo/pyes)
 
+
+### Contruct query
+
+```Python
+from pandasticsearch import DataFrame, Avg
+body = df[df['gender'] == 'male'].agg(Avg('age')).to_dict()
+ 
+from elasticsearch import Elasticsearch, Select
+result_dict = es.search(index="recruit", body=body)
+```
+
+### Parse result
+
 ```python
->>> from elasticsearch import Elasticsearch, Select
->>> es = Elasticsearch('http://localhost:9200')
->>> result_dict = es.search(index="recruit", body={"query": {"match_all": {}}})
->>> Select.from_dict(result_dict)
-Select: 10 rows
+from elasticsearch import Elasticsearch
+es = Elasticsearch('http://localhost:9200')
+result_dict = es.search(index="recruit", body={"query": {"match_all": {}}})
+Select.from_dict(result_dict).to_pandas()
 ```
 
 
