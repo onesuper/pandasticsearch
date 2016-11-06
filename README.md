@@ -1,10 +1,8 @@
 ## Pandasticsearch = Elasticsearch + Pandas DataFrame
 
-Pandasticsearch is a lightweight Elasticsearch client for data-analysis purpose. It interprets query results into
- [Pandas](http://pandas.pydata.org) DataFrame objects for data analysis. This can be used to gain direct insight
-  from Elasticsearch's analysis result, e.g. multi-level nested aggregation. Elasticsearch is skilled 
-  in real-time indexing, search and data-analysis. The results returned by Elasticsearch Rest API still
-  require processing before data scientists can conduct an analysis on. 
+Pandasticsearch is an Elasticsearch client for data-analysis purpose.
+It provides table-like access to Elasticsearch documents, similar
+to the Python Pandas library and R DataFrames.
 
 To install:
 
@@ -12,12 +10,16 @@ To install:
 pip3 install pandasticsearch
 ```
 
+  Elasticsearch is skilled in real-time indexing, search and data-analysis.
+  Pandasticsearch can convert the analysis results (e.g. multi-level nested aggregation)
+  into [Pandas](http://pandas.pydata.org) DataFrame objects for subsequent data analysis.
+  
+
 ## Usage
 
-### High Level API
+### DataFrame API
 
-A `DataFrame` object accesses Elasticsearch with high level API, like [elasticsearch-dsl-py](https://github.com/elastic/elasticsearch-dsl-py).
-
+A `DataFrame` object accesses Elasticsearch data with high level operations.
 It is type-safe, easy-to-use and Pandas-flavored.
 
 ```python
@@ -37,7 +39,7 @@ df.printSchema()
 df.columns
 #['name', 'age', 'gender']
 
-# Get the column
+# Denote the column
 df['name']
 # Column('name')
 
@@ -59,16 +61,16 @@ df.filter(df['age'] < 25).select('name').show(3)
 # | Leo  |
 # +------+
 
-# Aggregation
-df[df['gender'] == 'male'].agg(df['age'].avg).collect()
-# [Row(avg(age)=12)]
-
 # Sort
 df.sort(df['age'].asc).select('name', 'age').collect()
 #[Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
 
+# Aggregation
+df[df['gender'] == 'male'].agg(df['age'].avg).collect()
+# [Row(avg(age)=12)]
+
 # Convert to Pandas object for subsequent analysis
-df[df['gender'] == 'male'].agg(Avg('age')).to_pandas()
+df[df['gender'] == 'male'].agg(df['age'].avg).to_pandas()
 #    avg(age)
 # 0        12
 
@@ -76,7 +78,7 @@ df[df['gender'] == 'male'].agg(Avg('age')).to_pandas()
 
 
 
-### Use with Another Python Client
+## Use with Another Python Client
 
 Pandasticsearch can also be used with another full featured Python client:
 
@@ -86,13 +88,13 @@ Pandasticsearch can also be used with another full featured Python client:
 * [pyes](https://github.com/aparo/pyes)
 
 
-### Contruct query
+### Build query
 
 ```Python
-from pandasticsearch import DataFrame, Avg
-body = df[df['gender'] == 'male'].agg(Avg('age')).to_dict()
+from pandasticsearch import DataFrame
+body = df[df['gender'] == 'male'].agg(df['age'].avg).to_dict()
  
-from elasticsearch import Elasticsearch, Select
+from elasticsearch import Elasticsearch
 result_dict = es.search(index="recruit", body=body)
 ```
 
@@ -102,6 +104,8 @@ result_dict = es.search(index="recruit", body=body)
 from elasticsearch import Elasticsearch
 es = Elasticsearch('http://localhost:9200')
 result_dict = es.search(index="recruit", body={"query": {"match_all": {}}})
+
+from pandasticsearch import Select
 Select.from_dict(result_dict).to_pandas()
 ```
 
