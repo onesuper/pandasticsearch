@@ -28,7 +28,7 @@ from pandasticsearch import DataFrame
 df = DataFrame.from_es('http://localhost:9200', index='people')
 
 # Print the schema(mapping) of the index
-df.printSchema()
+df.print_schema()
 # company
 # |-- employee
 #   |-- name: {'index': 'not_analyzed', 'type': 'string'}
@@ -39,20 +39,20 @@ df.printSchema()
 df.columns
 #['name', 'age', 'gender']
 
-# Denote the column
-df['name']
+# Get the column
+df.name
 # Column('name')
 
 # Filter
-df.filter(df['age'] < 13).collect()
+df.filter(df.age. < 13).collect()
 # [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
 
 # Projection
-df.filter(df['age'] < 25).select('name', 'age').collect()
+df.filter(df.age. < 25).select('name', 'age').collect()
 # [Row(age=12,name='Alice'), Row(age=11,name='Bob'), Row(age=13,name='Leo')]
 
 # Print the rows into console
-df.filter(df['age'] < 25).select('name').show(3)
+df.filter(df.age < 25).select('name').show(3)
 # +------+
 # | name |
 # +------+
@@ -62,15 +62,15 @@ df.filter(df['age'] < 25).select('name').show(3)
 # +------+
 
 # Sort
-df.sort(df['age'].asc).select('name', 'age').collect()
+df.sort(df.age.asc).select('name', 'age').collect()
 #[Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
 
 # Aggregation
-df[df['gender'] == 'male'].agg(df['age'].avg).collect()
+df[df.gender == 'male'].agg(df.age.avg).collect()
 # [Row(avg(age)=12)]
-
+s
 # Convert to Pandas object for subsequent analysis
-df[df['gender'] == 'male'].agg(df['age'].avg).to_pandas()
+df[df.gender == 'male'].agg(df.age.avg).to_pandas()
 #    avg(age)
 # 0        12
 

@@ -12,14 +12,12 @@ import sys
 class DataFrame(object):
     """
     A :class:`DataFrame` treats index and documents in Elasticsearch as named columns and rows.
-    It can be converted to Pandas object for subsequent analysis.
 
-    >>> from pandasticsearch import DataFrame
-    >>> df = DataFrame.from_es('http://localhost:9200', index='company')
-
-    Create a DataFrame object
-    >>> from pandasticsearch import DataFrame
+s    >>> from pandasticsearch import DataFrame
     >>> df = DataFrame.from_es('http://localhost:9200', index='people')
+
+    It can be converted to Pandas object for subsequent analysis.
+    >>> df.to_pandas()
     """
 
     def __init__(self, client, mapping, **kwargs):
@@ -121,7 +119,18 @@ class DataFrame(object):
         >>> df.filter(df['age'] < 25).select('name', 'age').collect()
         [Row(age=12,name='Alice'), Row(age=11,name='Bob'), Row(age=13,name='Leo')]
         """
-        project = {"includes": cols, "excludes": []}
+        columns = []
+        for col in cols:
+            if isinstance(col, six.string_types):
+                columns.append(getattr(self, col))
+            elif isinstance(col, Column):
+                columns.append(col)
+            else:
+                raise TypeError('{0} is supposed to be str or Column'.format(col))
+        return self._select(*columns)
+
+    def _select(self, *cols):
+        project = {"includes": [col.field_name() for col in cols], "excludes": []}
         return DataFrame(self._client, self._mapping,
                          filter=self._filter,
                          aggregation=self._aggregation,
@@ -182,6 +191,7 @@ class DataFrame(object):
                          sort=sorts,
                          projection=self._projection,
                          limit=self._limit)
+
     orderby = sort
 
     def _execute(self):

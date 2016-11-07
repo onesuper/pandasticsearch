@@ -15,15 +15,19 @@ def create_df_from_es(mock_urlopen):
     return DataFrame.from_es("http://localhost:9200", 'xxx')
 
 
-class TestDataframe(unittest.TestCase):
+class TestDataFrame(unittest.TestCase):
     def test_getitem(self):
-        ps = create_df_from_es()
-        self.assertTrue(isinstance(ps['a'], Column))
+        df = create_df_from_es()
+        self.assertTrue(isinstance(df['a'], Column))
 
-        expr = ps['a'] > 2
+        expr = df['a'] > 2
         self.assertTrue(isinstance(expr, BooleanFilter))
-        self.assertTrue(isinstance(ps[expr], DataFrame))
-        self.assertEqual(ps[expr]._filter, {'range': {'a': {'gt': 2}}})
+        self.assertTrue(isinstance(df[expr], DataFrame))
+        self.assertEqual(df[expr]._filter, {'range': {'a': {'gt': 2}}})
+
+    def test_getattr(self):
+        df = create_df_from_es()
+        self.assertTrue(isinstance(df.a, Column))
 
     def test_columns(self):
         df = create_df_from_es()
@@ -54,7 +58,7 @@ class TestDataframe(unittest.TestCase):
     def test_select(self):
         df = create_df_from_es()
         self.assertEqual(df.select('a').to_dict(),
-                         {'_source': {'excludes': [], 'includes': ('a',)}, 'size': 20})
+                         {'_source': {'excludes': [], 'includes': ['a']}, 'size': 20})
 
     def test_limit(self):
         df = create_df_from_es()
@@ -72,7 +76,7 @@ class TestDataframe(unittest.TestCase):
         df2.print_debug()
 
         self.assertEqual(df2.to_dict(),
-                         {'_source': {'excludes': [], 'includes': ('a',)},
+                         {'_source': {'excludes': [], 'includes': ['a']},
                           'aggregations': {'avg(a)': {'avg': {'field': 'a'}}},
                           'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}},
                           'sort': [{'a': {'order': 'desc'}}],

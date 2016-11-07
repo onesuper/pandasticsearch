@@ -26,6 +26,9 @@ class Column(object):
     def isin(self, other):
         return IsIn(field=self._field, value=other)
 
+    def field_name(self):
+        return self._field
+
     @property
     def desc(self):
         return Sorter(self._field)
