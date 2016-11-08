@@ -51,7 +51,7 @@ class TestDataFrame(unittest.TestCase):
     def test_groupby(self):
         df = create_df_from_es()
         self.assertEqual((df.groupby(df.a)).to_dict(),
-                         {'aggregations': {'a': {'terms': {'field': 'a'}}}, 'size': 0})
+                         {'aggregations': {'a': {'terms': {'field': 'a', 'size': 20}}}, 'size': 0})
 
         self.assertEqual((df.groupby(df['a'], df['b'])).to_dict(),
                          {
@@ -59,9 +59,9 @@ class TestDataFrame(unittest.TestCase):
                                  'a': {
                                      'aggregations': {
                                          'b': {
-                                             'terms': {'field': 'b'}}
+                                             'terms': {'field': 'b', 'size': 20}}
                                      },
-                                     'terms': {'field': 'a'}}},
+                                     'terms': {'field': 'a', 'size': 20}}},
                              'size': 0})
 
     def test_agg(self):
@@ -100,13 +100,13 @@ class TestDataFrame(unittest.TestCase):
             .sort(Sorter('a')) \
             .limit(1)
 
-        df2.print_debug()
+        print(df2.to_dict())
 
         self.assertEqual(df2.to_dict(),
                          {'_source': {'excludes': [], 'includes': ['a']},
                           'aggregations': {
                               'b': {
-                                  'terms': {'field': 'b'},
+                                  'terms': {'field': 'b', 'size': 20},
                                   'aggregations': {
                                       'avg(a)': {'avg': {'field': 'a'}}}}
                           },
@@ -117,20 +117,19 @@ class TestDataFrame(unittest.TestCase):
     def test_complex_agg(self):
         df = create_df_from_es()
         df2 = df.groupby(df.b, df.a).agg(MetricAggregator('a', 'avg'))
-        df2.print_debug()
+        print(df2.to_dict())
 
         self.assertEqual(df2.to_dict(),
                          {
                              'size': 0,
                              'aggregations': {
                                  'b': {
-                                     'terms': {'field': 'b'},
+                                     'terms': {'field': 'b', 'size': 20},
                                      'aggregations': {
                                          'a': {
-                                             'terms': {'field': 'a'},
+                                             'terms': {'field': 'a', 'size': 20},
                                              'aggregations': {
                                                  'avg(a)': {'avg': {'field': 'a'}}}}
-
                                      }}}})
 
 

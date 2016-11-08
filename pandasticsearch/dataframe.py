@@ -172,11 +172,11 @@ s    >>> from pandasticsearch import DataFrame
     def _agg_by_group(self, *cols):
         if len(cols) == 1:
             col = cols[0]
-            return {col.field_name(): {'terms': {'field': col.field_name()}}}
+            return {col.field_name(): {'terms': {'field': col.field_name(), 'size': 20}}}
         else:
             col = cols[0]
             deep_agg = self._agg_by_group(*cols[1:])
-            return {col.field_name(): {'terms': {'field': col.field_name()}, 'aggregations': deep_agg}}
+            return {col.field_name(): {'terms': {'field': col.field_name(), 'size': 20}, 'aggregations': deep_agg}}
 
     def agg(self, *aggs):
         """
@@ -197,7 +197,6 @@ s    >>> from pandasticsearch import DataFrame
                     aggregation = aggregation[key]['aggregations']
                 else:
                     break
-            print(aggregation)
             key = list(aggregation.keys())[0]
             aggregation[key]['aggregations'] = self._agg(*aggs)
 
@@ -280,7 +279,7 @@ s    >>> from pandasticsearch import DataFrame
         _df = self.agg(MetricAggregator('_index', 'value_count'))
         return _df.collect()[0]['count(*)']
 
-    def show(self, n=10):
+    def show(self, n=10000):
         """
         Prints the first ``n`` rows to the console.
 
@@ -296,6 +295,10 @@ s    >>> from pandasticsearch import DataFrame
         +------+
         """
         assert n > 0
+
+        if self._aggregation is not None:
+            raise TypeError('show() is not allowed for aggregation. use collect() instead')
+
         query = self._execute()
         cols = self._columns
         widths = []
@@ -336,7 +339,7 @@ s    >>> from pandasticsearch import DataFrame
         """
         Return a indented JSON string returned by the Elasticsearch Server
         """
-        sys.stdout.write(json.dumps(self._build_query(), indent=4))
+        sys.stdout.write(json.dumps(self._client.post(data=self._build_query()), indent=4))
 
     def to_dict(self):
         """

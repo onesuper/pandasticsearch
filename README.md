@@ -47,7 +47,7 @@ df.name
 df.filter(df.age < 13).collect()
 # [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
 
-# Projection
+# Project
 df.filter(df.age < 25).select('name', 'age').collect()
 # [Row(age=12,name='Alice'), Row(age=11,name='Bob'), Row(age=13,name='Leo')]
 
@@ -65,10 +65,18 @@ df.filter(df.age < 25).select('name').show(3)
 df.sort(df.age.asc).select('name', 'age').collect()
 #[Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
 
-# Aggregation
+# Aggregate
 df[df.gender == 'male'].agg(df.age.avg).collect()
 # [Row(avg(age)=12)]
-s
+
+# Groupby
+df.groupby('gender').collect()
+# [Row(doc_count=1), Row(doc_count=2)]
+
+# Groupby and then aggregate
+df.groupby('gender').agg(df.age.max).collect()
+# [Row(doc_count=1, max(age)=12), Row(doc_count=2, max(age)=13)]
+
 # Convert to Pandas object for subsequent analysis
 df[df.gender == 'male'].agg(df.age.avg).to_pandas()
 #    avg(age)

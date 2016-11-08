@@ -52,13 +52,13 @@ class TestQueries(unittest.TestCase):
                             'key': 'a',
                             'f1': {'value': 100},
                             'f2': {'value': 1},
-                            "doc_count": 934422
+                            "doc_count": 12
                         },
                         {
                             'key': 'b',
                             'f1': {'value': 200},
                             'f2': {'value': 2},
-                            "doc_count": 934422
+                            "doc_count": 13
                         },
                     ]
                 }
@@ -70,9 +70,7 @@ class TestQueries(unittest.TestCase):
         print(repr(agg))
         print(agg.to_pandas())
 
-        self.assertEqual(len(agg), 2)
-        self.assertIsNotNone(agg.result)
-        self.assertEqual(len(agg.result[0]), 2)
+        self.assertEqual(agg.result, [{'f1': 100, 'f2': 1, 'doc_count': 12}, {'f1': 200, 'f2': 2, 'doc_count': 13}])
 
     def test_agg_nested_buckets(self):
         agg = Agg()
@@ -88,13 +86,13 @@ class TestQueries(unittest.TestCase):
                                         'key': 'x',
                                         'f1': {'value': 100},
                                         'f2': {'value': 1},
-                                        "doc_count": 934422
+                                        "doc_count": 11
                                     },
                                     {
                                         'key': 'y',
                                         'f1': {'value': 200},
                                         'f2': {'value': 2},
-                                        "doc_count": 934422
+                                        "doc_count": 12
                                     },
                                 ]
                             }
@@ -107,13 +105,13 @@ class TestQueries(unittest.TestCase):
                                         'key': 'x',
                                         'f1': {'value': 300},
                                         'f2': {'value': 3},
-                                        "doc_count": 934422
+                                        "doc_count": 13
                                     },
                                     {
                                         'key': 'y',
                                         'f1': {'value': 400},
                                         'f2': {'value': 4},
-                                        "doc_count": 934422
+                                        "doc_count": 14
                                     },
                                 ]
                             }
@@ -125,12 +123,13 @@ class TestQueries(unittest.TestCase):
 
         agg.explain_result()
         print(agg)
-        print(repr(agg))
         print(agg.to_pandas())
 
-        self.assertEqual(len(agg), 4)
-        self.assertIsNotNone(agg.result)
-        self.assertEqual(len(agg.result[0]), 2)
+        self.assertEqual(agg.result,
+                         [{'f1': 100, 'f2': 1, 'doc_count': 11},
+                          {'f1': 200, 'f2': 2, 'doc_count': 12},
+                          {'f1': 300, 'f2': 3, 'doc_count': 13},
+                          {'f1': 400, 'f2': 4, 'doc_count': 14}])
 
 
 if __name__ == '__main__':

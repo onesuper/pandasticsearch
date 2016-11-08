@@ -53,6 +53,8 @@ class Column(object):
     def value_count(self):
         return MetricAggregator(self._field, 'value_count')
 
+    count = value_count
+
     @property
     def cardinality(self):
         return MetricAggregator(self._field, 'cardinality')
