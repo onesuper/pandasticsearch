@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 _metric_aggs = ('avg', 'min', 'max', 'cardinality', 'value_count',
                 'percentiles', 'percentile_ranks')
 

@@ -7,7 +7,7 @@ to the Python Pandas library and R DataFrames.
 To install:
 
 ```
-pip3 install pandasticsearch
+pip install pandasticsearch
 ```
 
   Elasticsearch is skilled in real-time indexing, search and data-analysis.

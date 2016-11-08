@@ -1,5 +1,7 @@
-from pandasticsearch.operators import *
+# -*- coding: UTF-8 -*-
 
+from pandasticsearch.operators import *
+import six
 
 class Column(object):
     def __init__(self, field):
@@ -106,7 +108,13 @@ class Row(tuple):
         return name in self._fields
 
     def __repr__(self):
-        return 'Row({0})'.format(','.join(['{0}={1}'.format(k, repr(v)) for k, v in zip(self._fields, tuple(self))]))
+        return 'Row('+','.join(['{0}={1}'.format(k, Row._stringfy(v)) for k, v in zip(self._fields, tuple(self))])+')'
+
+    @classmethod
+    def _stringfy(cls, v):
+        b = six.StringIO()
+        b.write(repr(v))
+        return b.getvalue()
 
     def as_dict(self):
         return dict((x, y) for x, y in zip(self._fields, self))

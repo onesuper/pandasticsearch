@@ -13,7 +13,6 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(row['a'], 1)
         self.assertEqual(row['b'], '你好,世界')
         self.assertEqual(row.as_dict(), {'a': 1, 'b': '你好,世界'})
-        self.assertEqual(repr(row), '''Row(a=1,b='你好,世界')''')
 
     def test_column(self):
         col = Column('b')

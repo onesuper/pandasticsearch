@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 from pandasticsearch.client import RestClient
 from pandasticsearch.queries import Agg, Select
 from pandasticsearch.operators import *
@@ -13,7 +15,7 @@ class DataFrame(object):
     """
     A :class:`DataFrame` treats index and documents in Elasticsearch as named columns and rows.
 
-s    >>> from pandasticsearch import DataFrame
+    >>> from pandasticsearch import DataFrame
     >>> df = DataFrame.from_es('http://localhost:9200', index='people')
 
     It can be converted to Pandas object for subsequent analysis.
@@ -309,14 +311,15 @@ s    >>> from pandasticsearch import DataFrame
             maxlen = len(col)
             for kv in query.result[:n]:
                 if col in kv:
-                    s = str(kv[col])
+                    s = DataFrame._stringfy_value(kv[col])
                 else:
                     s = '(NULL)'
-                if len(s) > maxlen: maxlen = len(s)
+                if len(s) > maxlen:
+                    maxlen = len(s)
             widths.append(min(maxlen, 15))
 
         for w in widths:
-            tavnit += " %-" + "%ss |" % (w,)
+            tavnit += ' %-' + '%ss |' % (w,)
             separator += '-' * w + '--+'
 
         sys.stdout.write(separator + '\n')
@@ -326,11 +329,19 @@ s    >>> from pandasticsearch import DataFrame
             row = []
             for col in cols:
                 if col in kv:
-                    row.append(str(kv[col]))
+                    row.append(DataFrame._stringfy_value(kv[col]))
                 else:
                     row.append('(NULL)')
             sys.stdout.write(tavnit % tuple(row) + '\n')
         sys.stdout.write(separator + '\n')
+
+    @classmethod
+    def _stringfy_value(cls, value):
+        b = six.StringIO()
+        if isinstance(value, list):
+            value = ','.join([DataFrame._stringfy_value(v) for v in value])
+        b.write(repr(value))
+        return b.getvalue()
 
     def __repr__(self):
         return "DataFrame[%s]" % (", ".join("%s" % c for c in self._columns))

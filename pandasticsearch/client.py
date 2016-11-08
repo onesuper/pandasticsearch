@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 import json
 import sys
 from six.moves import urllib

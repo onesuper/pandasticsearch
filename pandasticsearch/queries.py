@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 import collections
 import json
 import pandas
