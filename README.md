@@ -44,11 +44,11 @@ df.name
 # Column('name')
 
 # Filter
-df.filter(df.age. < 13).collect()
+df.filter(df.age < 13).collect()
 # [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
 
 # Projection
-df.filter(df.age. < 25).select('name', 'age').collect()
+df.filter(df.age < 25).select('name', 'age').collect()
 # [Row(age=12,name='Alice'), Row(age=11,name='Bob'), Row(age=13,name='Leo')]
 
 # Print the rows into console

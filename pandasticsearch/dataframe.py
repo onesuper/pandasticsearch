@@ -35,7 +35,7 @@ s    >>> from pandasticsearch import DataFrame
             raise Exception('0 columns found in [{0}]'.format(self._index))
 
         self._client = client
-        self._columns = cols
+        self._columns = sorted(cols)
         self._mapping = mapping
         self._filter = kwargs.get('filter', None)
         self._aggregation = kwargs.get('aggregation', None)
@@ -151,24 +151,69 @@ s    >>> from pandasticsearch import DataFrame
                          sort=self._sort,
                          limit=num)
 
+    def groupby(self, *cols):
+        columns = []
+        for col in cols:
+            if isinstance(col, six.string_types):
+                columns.append(getattr(self, col))
+            elif isinstance(col, Column):
+                columns.append(col)
+            else:
+                raise TypeError('{0} is supposed to be str or Column'.format(col))
+
+        group_agg = self._agg_by_group(*columns)
+        return DataFrame(self._client, self._mapping,
+                         filter=self._filter,
+                         aggregation=group_agg,
+                         projection=self._projection,
+                         sort=self._sort,
+                         limit=self.limit)
+
+    def _agg_by_group(self, *cols):
+        if len(cols) == 1:
+            col = cols[0]
+            return {col.field_name(): {'terms': {'field': col.field_name()}}}
+        else:
+            col = cols[0]
+            deep_agg = self._agg_by_group(*cols[1:])
+            return {col.field_name(): {'terms': {'field': col.field_name()}, 'aggregations': deep_agg}}
+
     def agg(self, *aggs):
         """
         Aggregate on the entire DataFrame without groups.
         :param aggs: aggregate functions
 
-        >>> df[df['gender'] == 'male'].agg(Avg('age')).collect()
+        >>> df[df['gender'] == 'male'].agg(df['age'].avg).collect()
         [Row(avg(age)=12)]
         """
+
+        if self._aggregation is None:
+            self._aggregation = self._agg(*aggs)
+        else:
+            aggregation = self._aggregation
+            while True:
+                key = list(aggregation.keys())[0]
+                if 'aggregations' in aggregation[key]:
+                    aggregation = aggregation[key]['aggregations']
+                else:
+                    break
+            print(aggregation)
+            key = list(aggregation.keys())[0]
+            aggregation[key]['aggregations'] = self._agg(*aggs)
+
+        return DataFrame(self._client, self._mapping,
+                         filter=self._filter,
+                         aggregation=self._aggregation,
+                         projection=self._projection,
+                         sort=self._sort,
+                         limit=self._limit)
+
+    def _agg(self, *aggs):
         aggregation = {}
         for agg in aggs:
             assert isinstance(agg, Aggregator)
             aggregation.update(agg.build())
-        return DataFrame(self._client, self._mapping,
-                         filter=self._filter,
-                         aggregation=aggregation,
-                         projection=self._projection,
-                         sort=self._sort,
-                         limit=self._limit)
+        return aggregation
 
     def sort(self, *cols):
         """Returns a new :class:`DataFrame` sorted by the specified column(s).

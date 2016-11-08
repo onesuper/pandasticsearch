@@ -9,7 +9,8 @@ from pandasticsearch.operators import *
 @patch('pandasticsearch.client.urllib.request.urlopen')
 def create_df_from_es(mock_urlopen):
     response = Mock()
-    dic = {"index": {"mappings": {"type": {"properties": {"a": {"type": "integer"}}}}}}
+    dic = {"index": {"mappings": {"type": {"properties": {"a": {"type": "integer"},
+                                                          "b": {"type": "integer"}}}}}}
     response.read.return_value = json.dumps(dic).encode("utf-8")
     mock_urlopen.return_value = response
     return DataFrame.from_es("http://localhost:9200", 'xxx')
@@ -19,6 +20,7 @@ class TestDataFrame(unittest.TestCase):
     def test_getitem(self):
         df = create_df_from_es()
         self.assertTrue(isinstance(df['a'], Column))
+        self.assertTrue(isinstance(df['b'], Column))
 
         expr = df['a'] > 2
         self.assertTrue(isinstance(expr, BooleanFilter))
@@ -28,10 +30,15 @@ class TestDataFrame(unittest.TestCase):
     def test_getattr(self):
         df = create_df_from_es()
         self.assertTrue(isinstance(df.a, Column))
+        self.assertTrue(isinstance(df.b, Column))
 
     def test_columns(self):
         df = create_df_from_es()
-        self.assertEqual(df.columns, ['a'])
+        self.assertEqual(df.columns, ['a', 'b'])
+
+    def test_init(self):
+        df = create_df_from_es()
+        self.assertEqual(df.to_dict(), {'size': 20})
 
     def test_filter(self):
         df = create_df_from_es()
@@ -41,6 +48,22 @@ class TestDataFrame(unittest.TestCase):
         self.assertEqual(df.where(Greater('a', 2)).to_dict(),
                          {'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}}, 'size': 20})
 
+    def test_groupby(self):
+        df = create_df_from_es()
+        self.assertEqual((df.groupby(df.a)).to_dict(),
+                         {'aggregations': {'a': {'terms': {'field': 'a'}}}, 'size': 0})
+
+        self.assertEqual((df.groupby(df['a'], df['b'])).to_dict(),
+                         {
+                             'aggregations': {
+                                 'a': {
+                                     'aggregations': {
+                                         'b': {
+                                             'terms': {'field': 'b'}}
+                                     },
+                                     'terms': {'field': 'a'}}},
+                             'size': 0})
+
     def test_agg(self):
         df = create_df_from_es()
         self.assertEqual((df.agg(MetricAggregator('a', 'avg'))).to_dict(),
@@ -48,7 +71,7 @@ class TestDataFrame(unittest.TestCase):
 
     def test_sort(self):
         df = create_df_from_es()
-        self.assertEqual((df.sort(Sorter('a', 'asc'))).to_dict(),
+        self.assertEqual((df.sort(df['a'].asc)).to_dict(),
                          {'sort': [{'a': {'order': 'asc'}}], 'size': 20})
 
         self.assertEqual((df.sort(Sorter('a'), Sorter('b'))).to_dict(),
@@ -60,6 +83,9 @@ class TestDataFrame(unittest.TestCase):
         self.assertEqual(df.select('a').to_dict(),
                          {'_source': {'excludes': [], 'includes': ['a']}, 'size': 20})
 
+        self.assertEqual(df.select(df['a'], df['b']).to_dict(),
+                         {'_source': {'excludes': [], 'includes': ['a', 'b']}, 'size': 20})
+
     def test_limit(self):
         df = create_df_from_es()
         self.assertEqual(df.limit(199).to_dict(), {'size': 199})
@@ -68,8 +94,9 @@ class TestDataFrame(unittest.TestCase):
         df = create_df_from_es()
 
         df2 = df.filter(df['a'] > 2) \
-            .agg(MetricAggregator('a', 'avg')) \
             .select('a') \
+            .groupby('b') \
+            .agg(MetricAggregator('a', 'avg')) \
             .sort(Sorter('a')) \
             .limit(1)
 
@@ -77,10 +104,34 @@ class TestDataFrame(unittest.TestCase):
 
         self.assertEqual(df2.to_dict(),
                          {'_source': {'excludes': [], 'includes': ['a']},
-                          'aggregations': {'avg(a)': {'avg': {'field': 'a'}}},
+                          'aggregations': {
+                              'b': {
+                                  'terms': {'field': 'b'},
+                                  'aggregations': {
+                                      'avg(a)': {'avg': {'field': 'a'}}}}
+                          },
                           'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}},
                           'sort': [{'a': {'order': 'desc'}}],
                           'size': 0})
+
+    def test_complex_agg(self):
+        df = create_df_from_es()
+        df2 = df.groupby(df.b, df.a).agg(MetricAggregator('a', 'avg'))
+        df2.print_debug()
+
+        self.assertEqual(df2.to_dict(),
+                         {
+                             'size': 0,
+                             'aggregations': {
+                                 'b': {
+                                     'terms': {'field': 'b'},
+                                     'aggregations': {
+                                         'a': {
+                                             'terms': {'field': 'a'},
+                                             'aggregations': {
+                                                 'avg(a)': {'avg': {'field': 'a'}}}}
+
+                                     }}}})
 
 
 if __name__ == '__main__':
