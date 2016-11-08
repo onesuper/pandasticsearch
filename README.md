@@ -10,6 +10,8 @@ To install:
 
 ```
 pip install pandasticsearch
+# if you intent to export Pandas DataFrame 
+pip install pandasticsearch[pandas]
 ```
 
   Elasticsearch is skilled in real-time indexing, search and data-analysis.

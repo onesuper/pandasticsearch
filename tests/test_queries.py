@@ -66,9 +66,7 @@ class TestQueries(unittest.TestCase):
         }
 
         agg.explain_result()
-        print(agg)
-        print(repr(agg))
-        print(agg.to_pandas())
+        print(agg.result)
 
         self.assertEqual(agg.result, [{'f1': 100, 'f2': 1, 'doc_count': 12}, {'f1': 200, 'f2': 2, 'doc_count': 13}])
 
@@ -122,8 +120,7 @@ class TestQueries(unittest.TestCase):
         }
 
         agg.explain_result()
-        print(agg)
-        print(agg.to_pandas())
+        print(agg.result)
 
         self.assertEqual(agg.result,
                          [{'f1': 100, 'f2': 1, 'doc_count': 11},

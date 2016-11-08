@@ -2,8 +2,8 @@
 
 import collections
 import json
-import pandas
 
+from pandasticsearch.errors import NoSuchDependencyException
 
 class Query(collections.MutableSequence):
     def __init__(self):
@@ -71,6 +71,10 @@ class Select(Query):
         self._values = [hit['_source'] for hit in self._result_dict['hits']['hits']]
 
     def to_pandas(self):
+        try:
+            import pandas
+        except ImportError:
+            raise NoSuchDependencyException('this method requires pandas library')
         if self._values:
             df = pandas.DataFrame(data=self._values)
             return df
@@ -102,6 +106,10 @@ class Agg(Query):
                 self._indexes.append(index)
 
     def to_pandas(self):
+        try:
+            import pandas
+        except ImportError:
+            raise NoSuchDependencyException('this method requires pandas library')
         print(self._indexes, self._values)
         if self._values is not None:
             if len(self._indexes) > 0:
