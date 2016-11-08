@@ -1,24 +1,18 @@
 from setuptools import setup
 
-install_requires = [
-    "six >= 1.9.0",
-]
-
-extras_require = {
-    "official": ["elasticsearch"],
-}
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
 
 setup(
     name='pandasticsearch',
-    version='0.0.13',
+    version='0.1.0',
     author='onesuper',
     author_email='onesuperclark@gmail.com',
     packages=['pandasticsearch'],
     url='http://pypi.python.org/pypi/pandasticsearch/',
     license='MIT',
     description='A Pandastic Elasticsearch client for data analyzing.',
-    install_requires=install_requires,
-    extras_require=extras_require,
+    install_requires=required,
     test_suite='nose.collector',
-    tests_require=['pandas', 'nose', 'mock'],
+    tests_require=['nose', 'mock'],
 )

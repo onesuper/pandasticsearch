@@ -1,4 +1,6 @@
-## Pandasticsearch = Elasticsearch + Pandas DataFrame
+## Pandasticsearch
+
+[![Build Status](https://travis-ci.org/onesuper/pandasticsearch.svg?branch=master)](https://travis-ci.org/onesuper/pandasticsearch)
 
 Pandasticsearch is an Elasticsearch client for data-analysis purpose.
 It provides table-like access to Elasticsearch documents, similar

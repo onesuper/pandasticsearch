@@ -4,6 +4,8 @@
 .idea/
 dist/
 *.egg-info
+build/
+.cache/
 pandasticsearch/__pycache__/
 pandasticsearch/utils/__pycache__/
 tests/__pycache__/
