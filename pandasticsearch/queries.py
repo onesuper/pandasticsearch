@@ -110,7 +110,6 @@ class Agg(Query):
             import pandas
         except ImportError:
             raise NoSuchDependencyException('this method requires pandas library')
-        print(self._indexes, self._values)
         if self._values is not None:
             if len(self._indexes) > 0:
                 index = pandas.MultiIndex.from_tuples(self._indexes, names=self._index_names)
