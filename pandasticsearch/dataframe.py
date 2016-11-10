@@ -226,10 +226,10 @@ class DataFrame(object):
 
     def _execute(self):
         res_dict = self._client.post(data=self._build_query())
-        if self._aggregation is not None:
-            query = Agg.from_dict(res_dict)
-        else:
+        if self._aggregation is None and self._groupby is None:
             query = Select.from_dict(res_dict)
+        else:
+            query = Agg.from_dict(res_dict)
         return query
 
     def collect(self):
