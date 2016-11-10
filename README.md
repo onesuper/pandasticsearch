@@ -1,6 +1,7 @@
 ## Pandasticsearch
 
-[![Build Status](https://travis-ci.org/onesuper/pandasticsearch.svg?branch=master)](https://travis-ci.org/onesuper/pandasticsearch)
+[![Build Status](https://travis-ci.org/onesuper/pandasticsearch.svg?branch=master)](https://travis-ci.org/onesuper/pandasticsearch) [![PyPI](https://img.shields.io/pypi/v/pandasticsearch.svg)](https://pypi.python.org/pypi/pandasticsearch)
+
 
 Pandasticsearch is an Elasticsearch client for data-analysis purpose.
 It provides table-like access to Elasticsearch documents, similar
@@ -88,10 +89,10 @@ df[df.gender == 'male'].agg(df.age.avg).to_pandas()
 
 # Groupby a set of ranges
 df.groupby(df.age.ranges([10,12,14])).to_pandas()
-                  doc_count
-range(10,12,14)
-10.0-12.0                 2
-12.0-14.0                 1
+#                   doc_count
+# range(10,12,14)
+# 10.0-12.0                 2
+# 12.0-14.0                 1
 ```
 
 
