@@ -14,6 +14,27 @@ class Aggregator(object):
         pass
 
 
+class Grouper(object):
+    def __init__(self, field, size=20, inner=None):
+        self._field = field
+        self._size = size
+        self._outer = inner
+
+    @staticmethod
+    def from_list(l):
+        if len(l) == 1:
+            return Grouper(l[0])
+        return Grouper(l[0], inner=Grouper.from_list(l[1:]))
+
+    def build(self):
+        if self._outer is None:
+            return {self._field: {'terms': {'field': self._field, 'size': self._size}}}
+        else:
+            return {
+                self._field: {'terms': {'field': self._field, 'size': self._size},
+                              'aggregations': self._outer.build()}}
+
+
 class MetricAggregator(Aggregator):
     def __init__(self, field, agg_type, metric_rename=None, params=None):
         super(MetricAggregator, self).__init__(field)

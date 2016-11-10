@@ -9,6 +9,19 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(MetricAggregator('x', 'avg').build(), {'avg(x)': {'avg': {'field': 'x'}}})
         self.assertEqual(MetricAggregator('x', 'max').build(), {'max(x)': {'max': {'field': 'x'}}})
 
+    def test_grouper(self):
+        nested_grouper = Grouper('a', inner=Grouper('b', inner=Grouper('c')))
+        print(nested_grouper.build())
+        self.assertEqual(nested_grouper.build(),
+                         {
+                             'a': {
+                                 'terms': {'field': 'a', 'size': 20},
+                                 'aggregations': {
+                                     'b': {
+                                         'terms': {'field': 'b', 'size': 20},
+                                         'aggregations': {
+                                             'c': {'terms': {'field': 'c', 'size': 20}}}}}}})
+
     def test_sorter(self):
         self.assertEqual(Sorter('x').build(), {'x': {'order': 'desc'}})
         self.assertEqual(Sorter('x', mode='avg').build(), {'x': {'order': 'desc', 'mode': 'avg'}})

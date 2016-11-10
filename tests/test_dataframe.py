@@ -93,16 +93,36 @@ class TestDataFrame(unittest.TestCase):
     def test_complex(self):
         df = create_df_from_es()
 
-        df2 = df.filter(df['a'] > 2) \
-            .select('a') \
-            .groupby('b') \
-            .agg(MetricAggregator('a', 'avg')) \
-            .sort(Sorter('a')) \
-            .limit(1)
+        df2 = df.filter(df['a'] > 2)
+        df3 = df2.select('a').limit(30)
 
-        print(df2.to_dict())
+        print(df3.to_dict())
+        self.assertEqual(df3.to_dict(),
+                         {'_source': {'excludes': [], 'includes': ['a']},
+                          'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}},
+                          'size': 30})
 
-        self.assertEqual(df2.to_dict(),
+        df4 = df3.groupby('b')
+        df5 = df4.agg(MetricAggregator('a', 'avg'))
+
+        print(df5.to_dict())
+        # print(df5.to_dict())
+
+        self.assertEqual(df5.to_dict(),
+                         {'_source': {'excludes': [], 'includes': ['a']},
+                          'aggregations': {
+                              'b': {
+                                  'terms': {'field': 'b', 'size': 20},
+                                  'aggregations': {
+                                      'avg(a)': {'avg': {'field': 'a'}}}}
+                          },
+                          'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}},
+                          'size': 0})
+
+        df6 = df5.sort(Sorter('a'))
+
+        print(df6.to_dict())
+        self.assertEqual(df6.to_dict(),
                          {'_source': {'excludes': [], 'includes': ['a']},
                           'aggregations': {
                               'b': {
@@ -116,10 +136,11 @@ class TestDataFrame(unittest.TestCase):
 
     def test_complex_agg(self):
         df = create_df_from_es()
-        df2 = df.groupby(df.b, df.a).agg(MetricAggregator('a', 'avg'))
-        print(df2.to_dict())
+        df2 = df.groupby(df.b, df.a)
 
-        self.assertEqual(df2.to_dict(),
+        df3 = df2.agg(MetricAggregator('a', 'avg'))
+
+        self.assertEqual(df3.to_dict(),
                          {
                              'size': 0,
                              'aggregations': {

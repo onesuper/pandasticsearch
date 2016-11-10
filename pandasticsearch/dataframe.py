@@ -9,7 +9,7 @@ from pandasticsearch.types import Row
 import json
 import six
 import sys
-
+import copy
 
 class DataFrame(object):
     """
@@ -40,6 +40,7 @@ class DataFrame(object):
         self._columns = sorted(cols)
         self._mapping = mapping
         self._filter = kwargs.get('filter', None)
+        self._groupby = kwargs.get('groupby', None)
         self._aggregation = kwargs.get('aggregation', None)
         self._sort = kwargs.get('sort', None)
         self._projection = kwargs.get('projection', None)
@@ -105,6 +106,7 @@ class DataFrame(object):
         assert isinstance(condition, BooleanFilter)
         return DataFrame(self._client, self._mapping,
                          filter=condition.build(),
+                         groupby=self._groupby,
                          aggregation=self._aggregation,
                          projection=self._projection,
                          sort=self._sort,
@@ -135,6 +137,7 @@ class DataFrame(object):
         project = {"includes": [col.field_name() for col in cols], "excludes": []}
         return DataFrame(self._client, self._mapping,
                          filter=self._filter,
+                         groupby=self._groupby,
                          aggregation=self._aggregation,
                          projection=project,
                          sort=self._sort,
@@ -148,6 +151,7 @@ class DataFrame(object):
         assert num >= 1
         return DataFrame(self._client, self._mapping,
                          filter=self._filter,
+                         groupby=self._groupby,
                          aggregation=self._aggregation,
                          projection=self._projection,
                          sort=self._sort,
@@ -163,22 +167,16 @@ class DataFrame(object):
             else:
                 raise TypeError('{0} is supposed to be str or Column'.format(col))
 
-        group_agg = self._agg_by_group(*columns)
+        names = [col.field_name() for col in columns]
+        groupby = Grouper.from_list(names).build()
+
         return DataFrame(self._client, self._mapping,
                          filter=self._filter,
-                         aggregation=group_agg,
+                         groupby=groupby,
+                         aggregation=self._aggregation,
                          projection=self._projection,
                          sort=self._sort,
                          limit=self.limit)
-
-    def _agg_by_group(self, *cols):
-        if len(cols) == 1:
-            col = cols[0]
-            return {col.field_name(): {'terms': {'field': col.field_name(), 'size': 20}}}
-        else:
-            col = cols[0]
-            deep_agg = self._agg_by_group(*cols[1:])
-            return {col.field_name(): {'terms': {'field': col.field_name(), 'size': 20}, 'aggregations': deep_agg}}
 
     def agg(self, *aggs):
         """
@@ -188,33 +186,18 @@ class DataFrame(object):
         >>> df[df['gender'] == 'male'].agg(df['age'].avg).collect()
         [Row(avg(age)=12)]
         """
-
-        if self._aggregation is None:
-            self._aggregation = self._agg(*aggs)
-        else:
-            aggregation = self._aggregation
-            while True:
-                key = list(aggregation.keys())[0]
-                if 'aggregations' in aggregation[key]:
-                    aggregation = aggregation[key]['aggregations']
-                else:
-                    break
-            key = list(aggregation.keys())[0]
-            aggregation[key]['aggregations'] = self._agg(*aggs)
-
-        return DataFrame(self._client, self._mapping,
-                         filter=self._filter,
-                         aggregation=self._aggregation,
-                         projection=self._projection,
-                         sort=self._sort,
-                         limit=self._limit)
-
-    def _agg(self, *aggs):
         aggregation = {}
         for agg in aggs:
             assert isinstance(agg, Aggregator)
             aggregation.update(agg.build())
-        return aggregation
+
+        return DataFrame(self._client, self._mapping,
+                         filter=self._filter,
+                         groupby=self._groupby,
+                         aggregation=aggregation,
+                         projection=self._projection,
+                         sort=self._sort,
+                         limit=self._limit)
 
     def sort(self, *cols):
         """Returns a new :class:`DataFrame` sorted by the specified column(s).
@@ -233,9 +216,10 @@ class DataFrame(object):
 
         return DataFrame(self._client, self._mapping,
                          filter=self._filter,
+                         groupby=self._groupby,
                          aggregation=self._aggregation,
-                         sort=sorts,
                          projection=self._projection,
+                         sort=sorts,
                          limit=self._limit)
 
     orderby = sort
@@ -394,16 +378,36 @@ class DataFrame(object):
         return self._mapping
 
     def _build_query(self):
-        query = {}
+        query = dict()
 
         if self._limit:
             query['size'] = self._limit
         else:
             query['size'] = 20
 
-        if self._aggregation:
-            query['aggregations'] = self._aggregation
+        if self._groupby and not self._aggregation:
+            query['aggregations'] = self._groupby
             query['size'] = 0
+
+        if self._aggregation:
+            if self._groupby is None:
+                query['aggregations'] = self._aggregation
+                query['size'] = 0
+
+            else:
+                agg = copy.deepcopy(self._groupby)
+                # insert aggregator to the inner-most grouper
+                inner_most = agg
+                while True:
+                    key = list(inner_most.keys())[0]
+                    if 'aggregations' in inner_most[key]:
+                        inner_most = inner_most[key]['aggregations']
+                    else:
+                        break
+                key = list(inner_most.keys())[0]
+                inner_most[key]['aggregations'] = self._aggregation
+                query['aggregations'] = agg
+                query['size'] = 0
 
         if self._filter:
             query['query'] = {'filtered': {'filter': self._filter}}
