@@ -106,7 +106,6 @@ class TestDataFrame(unittest.TestCase):
         df5 = df4.agg(MetricAggregator('a', 'avg'))
 
         print(df5.to_dict())
-        # print(df5.to_dict())
 
         self.assertEqual(df5.to_dict(),
                          {'_source': {'excludes': [], 'includes': ['a']},

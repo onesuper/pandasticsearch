@@ -32,6 +32,9 @@ class Column(object):
     def field_name(self):
         return self._field
 
+    def ranges(self, range_list):
+        return RangeGrouper(field=self._field, range_list=range_list)
+
     @property
     def isnull(self):
         return Null(field=self._field)

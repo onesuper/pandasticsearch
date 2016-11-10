@@ -86,6 +86,12 @@ df[df.gender == 'male'].agg(df.age.avg).to_pandas()
 #    avg(age)
 # 0        12
 
+# Groupby a set of ranges
+df.groupby(df.age.ranges([10,12,14])).to_pandas()
+                  doc_count
+range(10,12,14)
+10.0-12.0                 2
+12.0-14.0                 1
 ```
 
 

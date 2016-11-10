@@ -22,6 +22,12 @@ class TestOperators(unittest.TestCase):
                                          'aggregations': {
                                              'c': {'terms': {'field': 'c', 'size': 20}}}}}}})
 
+    def test_range_grouper(self):
+        range_grouper = RangeGrouper('a', [1, 3, 6])
+        print(range_grouper.build())
+        self.assertEqual(range_grouper.build(), {
+            'range(1,3,6)': {'range': {'ranges': [{'to': 3, 'from': 1}, {'to': 6, 'from': 3}], 'field': 'a'}}})
+
     def test_sorter(self):
         self.assertEqual(Sorter('x').build(), {'x': {'order': 'desc'}})
         self.assertEqual(Sorter('x', mode='avg').build(), {'x': {'order': 'desc', 'mode': 'avg'}})

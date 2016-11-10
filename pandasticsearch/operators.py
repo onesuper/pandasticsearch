@@ -35,6 +35,23 @@ class Grouper(object):
                               'aggregations': self._outer.build()}}
 
 
+class RangeGrouper(object):
+    def __init__(self, field, range_list):
+        assert isinstance(range_list, list)
+        self._field = field
+        self._range_list = range_list
+
+    def build(self):
+        ranges = []
+        starts = self._range_list[:-1]
+        ends = self._range_list[1:]
+        for start, end in zip(starts, ends):
+            ranges.append({'from': start, 'to': end})
+
+        name = 'range(' + ','.join([str(x) for x in self._range_list]) + ')'
+        return {name: {'range': {'field': self._field, 'ranges': ranges}}}
+
+
 class MetricAggregator(Aggregator):
     def __init__(self, field, agg_type, metric_rename=None, params=None):
         super(MetricAggregator, self).__init__(field)
@@ -44,7 +61,7 @@ class MetricAggregator(Aggregator):
 
     def build(self):
         if self._type not in _metric_aggs:
-            raise Exception('Not support metric aggregator: {0}'.format(agg_type))
+            raise Exception('Not support metric aggregator: {0}'.format(self._type))
 
         if self._metric_rename is None:
             name = '{0}({1})'.format(self._type, self._field)
@@ -68,7 +85,7 @@ class Sorter(object):
         sort = {}
         if self._mode is not None:
             if self._mode not in _sort_mode:
-                raise Exception('Not support sort mode: {0}'.format(mode))
+                raise Exception('Not support sort mode: {0}'.format(self._mode))
             sort['mode'] = self._mode
         sort['order'] = self._order
         return {self._field: sort}

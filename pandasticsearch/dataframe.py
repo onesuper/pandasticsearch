@@ -159,16 +159,20 @@ class DataFrame(object):
 
     def groupby(self, *cols):
         columns = []
-        for col in cols:
-            if isinstance(col, six.string_types):
-                columns.append(getattr(self, col))
-            elif isinstance(col, Column):
-                columns.append(col)
-            else:
-                raise TypeError('{0} is supposed to be str or Column'.format(col))
 
-        names = [col.field_name() for col in columns]
-        groupby = Grouper.from_list(names).build()
+        if len(cols) == 1 and isinstance(cols[0], RangeGrouper):
+            groupby = cols[0].build()
+        else:
+            for col in cols:
+                if isinstance(col, six.string_types):
+                    columns.append(getattr(self, col))
+                elif isinstance(col, Column):
+                    columns.append(col)
+                else:
+                    raise TypeError('{0} is supposed to be str or Column'.format(col))
+
+            names = [col.field_name() for col in columns]
+            groupby = Grouper.from_list(names).build()
 
         return DataFrame(self._client, self._mapping,
                          filter=self._filter,
