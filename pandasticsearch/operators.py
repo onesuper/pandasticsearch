@@ -171,3 +171,9 @@ class IsIn(BooleanFilter):
         super(IsIn, self).__init__()
         assert isinstance(value, list)
         self._filter = {'terms': {field: value}}
+
+
+class Null(BooleanFilter):
+    def __init__(self, field):
+        super(Null, self).__init__()
+        self._filter = {'missing': {'field': field}}

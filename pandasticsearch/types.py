@@ -3,6 +3,7 @@
 from pandasticsearch.operators import *
 import six
 
+
 class Column(object):
     def __init__(self, field):
         self._field = field
@@ -30,6 +31,10 @@ class Column(object):
 
     def field_name(self):
         return self._field
+
+    @property
+    def isnull(self):
+        return Null(field=self._field)
 
     @property
     def desc(self):

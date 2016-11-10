@@ -35,6 +35,7 @@ class TestOperators(unittest.TestCase):
         self.assertEqual((~exp).build()['bool'], {"must_not": {"term": {"a": 2}}})
         self.assertEqual(Greater('a', 2).build(), {"range": {"a": {"gt": 2}}})
         self.assertEqual(IsIn('a', [1, 2, 3]).build(), {'terms': {'a': [1, 2, 3]}})
+        self.assertEqual(Null('a').build(), {'missing': {'field': 'a'}})
 
     def test_and_filter(self):
         self.assertEqual(
