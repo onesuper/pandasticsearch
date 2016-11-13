@@ -93,8 +93,17 @@ df.groupby(df.age.ranges([10,12,14])).to_pandas()
 # range(10,12,14)
 # 10.0-12.0                 2
 # 12.0-14.0                 1
-```
 
+# Filter by scripting
+from pandasticsearch.operators import ScriptFilter
+df.filter(ScriptFilter('2016 - doc["age"].value > 1995')).collect()
+# [Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+
+# Sory by scripting
+from pandasticsearch.operators import ScriptSorter
+df.sort(ScriptSorter('doc["age"].value * 2')).collect()
+#[Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+```
 
 
 ## Use with Another Python Client

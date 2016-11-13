@@ -32,6 +32,14 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(Sorter('x').build(), {'x': {'order': 'desc'}})
         self.assertEqual(Sorter('x', mode='avg').build(), {'x': {'order': 'desc', 'mode': 'avg'}})
 
+        self.assertEqual(ScriptSorter('doc["field_name"].value * factor', params={'factor': 1.1}).build(),
+                         {'_script': {'type': 'number',
+                                      'order': 'desc',
+                                      'script': 'doc["field_name"].value * factor',
+                                      "params": {
+                                          "factor": 1.1
+                                      }}})
+
     def test_leaf_boolean_filter(self):
         self.assertEqual(GreaterEqual('a', 2).build(), {"range": {"a": {"gte": 2}}})
         self.assertEqual(LessEqual('a', 2).build(), {"range": {"a": {"lte": 2}}})
@@ -42,6 +50,11 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(Greater('a', 2).build(), {"range": {"a": {"gt": 2}}})
         self.assertEqual(IsIn('a', [1, 2, 3]).build(), {'terms': {'a': [1, 2, 3]}})
         self.assertEqual(Null('a').build(), {'missing': {'field': 'a'}})
+        self.assertEqual(ScriptFilter('doc["num1"].value > params.param1', params={'param1': 5}).build(),
+                         {'script': {
+                             'script': {
+                                 'inline': 'doc["num1"].value > params.param1',
+                                 'params': {'param1': 5}}}})
 
     def test_and_filter(self):
         self.assertEqual(

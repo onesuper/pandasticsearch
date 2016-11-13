@@ -52,6 +52,21 @@ class RangeGrouper(object):
         return {name: {'range': {'field': self._field, 'ranges': ranges}}}
 
 
+class Scriptor(object):
+    def __init__(self, inline, lang=None, params=None):
+        self._inline = inline
+        self._lang = lang
+        self._params = params
+
+    def build(self):
+        script = {'inline': self._inline}
+        if self._lang:
+            script['lang'] = self._lang
+        if self._params:
+            script['params'] = self._params
+        return {'script': script}
+
+
 class MetricAggregator(Aggregator):
     def __init__(self, field, agg_type, metric_rename=None, params=None):
         super(MetricAggregator, self).__init__(field)
@@ -89,6 +104,19 @@ class Sorter(object):
             sort['mode'] = self._mode
         sort['order'] = self._order
         return {self._field: sort}
+
+
+class ScriptSorter(object):
+    def __init__(self, script, order='desc', params=None):
+        self._order = order
+        self._script = script
+        self._params = params
+
+    def build(self):
+        script = {'script': self._script, 'type': 'number', 'order': self._order}
+        if self._params:
+            script['params'] = self._params
+        return {'_script': script}
 
 
 # Es filter builder for BooleanCond
@@ -194,3 +222,9 @@ class Null(BooleanFilter):
     def __init__(self, field):
         super(Null, self).__init__()
         self._filter = {'missing': {'field': field}}
+
+
+class ScriptFilter(BooleanFilter):
+    def __init__(self, inline, lang=None, params=None):
+        super(ScriptFilter, self).__init__()
+        self._filter = {'script': Scriptor(inline, lang, params).build()}

@@ -40,12 +40,12 @@ class Column(object):
         return Null(field=self._field)
 
     @property
-    def desc(self):
-        return Sorter(self._field)
+    def desc(self, mode=None):
+        return Sorter(self._field, mode=mode)
 
     @property
-    def asc(self):
-        return Sorter(self._field, 'asc')
+    def asc(self, mode=None):
+        return Sorter(self._field, order='asc', mode=mode)
 
     @property
     def max(self):
