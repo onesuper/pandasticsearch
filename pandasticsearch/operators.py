@@ -236,10 +236,16 @@ class Startswith(BooleanFilter):
         self._filter = {'prefix': {field: value}}
 
 
-class Null(BooleanFilter):
+class IsNull(BooleanFilter):
     def __init__(self, field):
-        super(Null, self).__init__()
+        super(IsNull, self).__init__()
         self._filter = {'missing': {'field': field}}
+
+
+class NotNull(BooleanFilter):
+    def __init__(self, field):
+        super(NotNull, self).__init__()
+        self._filter = {'exists': {'field': field}}
 
 
 class ScriptFilter(BooleanFilter):

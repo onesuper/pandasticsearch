@@ -26,6 +26,8 @@ class TestSchema(unittest.TestCase):
         self._assert_equal_filter(col.like('a*b'), Like('b', 'a*b'))
         self._assert_equal_filter(col.rlike('a*b'), Rlike('b', 'a*b'))
         self._assert_equal_filter(col.startswith('jj'), Startswith('b', 'jj'))
+        self._assert_equal_filter(col.isnull, IsNull('b'))
+        self._assert_equal_filter(col.notnull, NotNull('b'))
 
     def _assert_equal_filter(self, x, y):
         self.assertTrue(x, BooleanFilter)

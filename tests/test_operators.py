@@ -52,7 +52,8 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(Like('a', 'a*b').build(), {'wildcard': {'a': 'a*b'}})
         self.assertEqual(Rlike('a', 'a*b').build(), {'regexp': {'a': 'a*b'}})
         self.assertEqual(Startswith('a', 'jj').build(), {'prefix': {'a': 'jj'}})
-        self.assertEqual(Null('a').build(), {'missing': {'field': 'a'}})
+        self.assertEqual(IsNull('a').build(), {'missing': {'field': 'a'}})
+        self.assertEqual(NotNull('a').build(), {'exists': {'field': 'a'}})
         self.assertEqual(ScriptFilter('doc["num1"].value > params.param1', params={'param1': 5}).build(),
                          {'script': {
                              'script': {

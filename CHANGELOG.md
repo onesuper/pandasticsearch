@@ -1,7 +1,7 @@
 
 ### 0.2.0
 
-* support boolean filter: `like`, `rlike`, `startswith`
+* support boolean filter: `like`, `rlike`, `startswith`, `notnull`
 * display time in `df.show()`
 
 ### 0.1.0

@@ -46,7 +46,11 @@ class Column(object):
 
     @property
     def isnull(self):
-        return Null(field=self._field)
+        return IsNull(field=self._field)
+
+    @property
+    def notnull(self):
+        return NotNull(field=self._field)
 
     @property
     def desc(self, mode=None):
