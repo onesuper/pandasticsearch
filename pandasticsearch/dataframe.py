@@ -8,8 +8,9 @@ from pandasticsearch.types import Row
 
 import json
 import six
-import sys
 import copy
+import sys
+
 
 class DataFrame(object):
     """
@@ -131,15 +132,11 @@ class DataFrame(object):
                 columns.append(col)
             else:
                 raise TypeError('{0} is supposed to be str or Column'.format(col))
-        return self._select(*columns)
-
-    def _select(self, *cols):
-        project = {"includes": [col.field_name() for col in cols], "excludes": []}
         return DataFrame(self._client, self._mapping,
                          filter=self._filter,
                          groupby=self._groupby,
                          aggregation=self._aggregation,
-                         projection=project,
+                         projection=columns,
                          sort=self._sort,
                          limit=self._limit)
 
@@ -269,11 +266,12 @@ class DataFrame(object):
         _df = self.agg(MetricAggregator('_index', 'value_count'))
         return _df.collect()[0]['count(*)']
 
-    def show(self, n=10000):
+    def show(self, n=10000, truncate=15):
         """
         Prints the first ``n`` rows to the console.
 
         :param n:  Number of rows to show.
+        :param truncate:  Number of words to be truncated for each column.
 
         >>> df.filter(df['age'] < 25).select('name').show(3)
         +------+
@@ -290,46 +288,13 @@ class DataFrame(object):
             raise TypeError('show() is not allowed for aggregation. use collect() instead')
 
         query = self._execute()
-        cols = self._columns
-        widths = []
-        tavnit = '|'
-        separator = '+'
 
-        for col in cols:
-            maxlen = len(col)
-            for kv in query.result[:n]:
-                if col in kv:
-                    s = DataFrame._stringfy_value(kv[col])
-                else:
-                    s = '(NULL)'
-                if len(s) > maxlen:
-                    maxlen = len(s)
-            widths.append(min(maxlen, 15))
-
-        for w in widths:
-            tavnit += ' %-' + '%ss |' % (w,)
-            separator += '-' * w + '--+'
-
-        sys.stdout.write(separator + '\n')
-        sys.stdout.write(tavnit % tuple(cols) + '\n')
-        sys.stdout.write(separator + '\n')
-        for kv in query.result[:n]:
-            row = []
-            for col in cols:
-                if col in kv:
-                    row.append(DataFrame._stringfy_value(kv[col]))
-                else:
-                    row.append('(NULL)')
-            sys.stdout.write(tavnit % tuple(row) + '\n')
-        sys.stdout.write(separator + '\n')
-
-    @classmethod
-    def _stringfy_value(cls, value):
-        b = six.StringIO()
-        if isinstance(value, list):
-            value = ','.join([DataFrame._stringfy_value(v) for v in value])
-        b.write(repr(value))
-        return b.getvalue()
+        if self._projection:
+            cols = [col.field_name() for col in self._projection]
+        else:
+            cols = self._columns
+        sys.stdout.write(query.result_as_tabular(cols, n, truncate))
+        sys.stdout.write('time: {0}ms\n'.format(query.millis_taken))
 
     def __repr__(self):
         return "DataFrame[%s]" % (", ".join("%s" % c for c in self._columns))
@@ -417,7 +382,7 @@ class DataFrame(object):
             query['query'] = {'filtered': {'filter': self._filter}}
 
         if self._projection:
-            query['_source'] = self._projection
+            query['_source'] = {"includes": [col.field_name() for col in self._projection], "excludes": []}
 
         if self._sort:
             query['sort'] = self._sort

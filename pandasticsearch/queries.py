@@ -2,19 +2,23 @@
 
 import collections
 import json
+import six
 
 from pandasticsearch.errors import NoSuchDependencyException
+
 
 class Query(collections.MutableSequence):
     def __init__(self):
         super(Query, self).__init__()
         self._values = None
         self._result_dict = None
+        self._took_millis = None
 
     def explain_result(self, result=None):
         if result is not None:
             assert isinstance(result, dict)
             self._result_dict = result
+            self._took_millis = self._result_dict['took']
 
     def to_pandas(self):
         """
@@ -30,6 +34,10 @@ class Query(collections.MutableSequence):
     @property
     def result(self):
         return self._values
+
+    @property
+    def millis_taken(self):
+        return self._took_millis
 
     @property
     def json(self):
@@ -85,6 +93,53 @@ class Select(Query):
         query.explain_result(d)
         return query
 
+    @classmethod
+    def _stringfy_value(cls, value):
+        b = six.StringIO()
+        if value:
+            b.write(repr(value))
+        else:
+            b.write('(NULL)')
+        return b.getvalue()
+
+    def result_as_tabular(self, cols, n, truncate=20):
+        b = six.StringIO()
+        widths = []
+        tavnit = '|'
+        separator = '+'
+
+        for col in cols:
+            maxlen = len(col)
+            for kv in self.result[:n]:
+                if col in kv:
+                    s = Select._stringfy_value(kv[col])
+                else:
+                    s = '(NULL)'
+                if len(s) > maxlen:
+                    maxlen = len(s)
+            widths.append(min(maxlen, truncate))
+
+        for w in widths:
+            tavnit += ' %-' + '%ss |' % (w,)
+            separator += '-' * w + '--+'
+
+        b.write(separator + '\n')
+        b.write(tavnit % tuple(cols) + '\n')
+        b.write(separator + '\n')
+        for kv in self.result[:n]:
+            row = []
+            for col in cols:
+                if col in kv:
+                    s = Select._stringfy_value(kv[col])
+                    if len(s) > truncate:
+                        s = s[:truncate-3] + '...'
+                else:
+                    s = '(NULL)'
+                row.append(s)
+            b.write(tavnit % tuple(row) + '\n')
+        b.write(separator + '\n')
+        return b.getvalue()
+
 
 class Agg(Query):
     def __init__(self):
@@ -137,7 +192,7 @@ class Agg(Query):
                     row[k] = v['value']
                 elif 'values' in v:  # percentiles
                     row = v['values']
-            if k == 'doc_count': # count docs
+            if k == 'doc_count':  # count docs
                 row['doc_count'] = v
 
         if len(row) > 0:
