@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 
-_metric_aggs = ('avg', 'min', 'max', 'cardinality', 'value_count', 'sum'
-                'percentiles', 'percentile_ranks')
+_metric_aggs = ('avg', 'min', 'max', 'cardinality', 'value_count', 'sum',
+                'percentiles', 'percentile_ranks', 'stats', 'extended_stats')
 
 _sort_mode = ('min', 'max', 'sum', 'avg', 'median')
 

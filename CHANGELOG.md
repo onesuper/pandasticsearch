@@ -1,6 +1,7 @@
 
 ### 0.2.0
 
+* support metric agg: `stats`, `extended_stats`
 * support boolean filter: `like`, `rlike`, `startswith`, `notnull`
 * display time in `df.show()`
 

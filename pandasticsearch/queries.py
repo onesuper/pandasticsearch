@@ -192,8 +192,11 @@ class Agg(Query):
                     row[k] = v['value']
                 elif 'values' in v:  # percentiles
                     row = v['values']
-            if k == 'doc_count':  # count docs
-                row['doc_count'] = v
+                else:
+                    row.update(v)    # stats
+            else:
+                if k == 'doc_count':  # count docs
+                    row['doc_count'] = v
 
         if len(row) > 0:
             yield (names, indexes, row)

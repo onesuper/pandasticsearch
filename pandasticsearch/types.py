@@ -96,6 +96,14 @@ class Column(object):
     def percentile_ranks(self):
         return MetricAggregator(self._field, 'percentile_ranks')
 
+    @property
+    def stats(self):
+        return MetricAggregator(self._field, 'stats')
+
+    @property
+    def extended_stats(self):
+        return MetricAggregator(self._field, 'extended_stats')
+
 
 class Row(tuple):
     """

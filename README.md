@@ -100,7 +100,7 @@ df.sort(ScriptSorter('doc["age"].value * 2')).collect()
 df[df.gender == 'male'].agg(df.age.avg).collect()
 # [Row(avg(age)=12)]
 
-# Groupby
+# Groupby only (will give the `doc_count`)
 df.groupby('gender').collect()
 # [Row(doc_count=1), Row(doc_count=2)]
 
@@ -120,6 +120,10 @@ df[df.gender == 'male'].agg(df.age.avg).to_pandas()
 #    avg(age)
 # 0        12
 
+# Advanced ES functinality
+df.groupby(df.gender).agg(df.age.stats).to_pandas()
+df.agg(df.age.extended_stats).to_pandas()
+df.agg(df.age.percentiles).to_pandas()
 ```
 
 
