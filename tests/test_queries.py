@@ -12,7 +12,8 @@ def create_hits():
                 {'_source': {'a': 2, 'b': 2}},
                 {'_source': {'a': 3, 'b': 3}},
             ]
-        }
+        },
+        'took': 1
     }
 
 
@@ -45,6 +46,7 @@ class TestQueries(unittest.TestCase):
     def test_agg_buckets(self):
         agg = Agg()
         agg._result_dict = {
+            'took': 1,
             'aggregations': {
                 'agg_key': {
                     'buckets': [
@@ -73,6 +75,7 @@ class TestQueries(unittest.TestCase):
     def test_agg_nested_buckets(self):
         agg = Agg()
         agg._result_dict = {
+            'took': 1,
             'aggregations': {
                 'agg_key1': {
                     'buckets': [
