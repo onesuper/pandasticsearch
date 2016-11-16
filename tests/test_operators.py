@@ -49,6 +49,9 @@ class TestOperators(unittest.TestCase):
         self.assertEqual((~exp).build()['bool'], {"must_not": {"term": {"a": 2}}})
         self.assertEqual(Greater('a', 2).build(), {"range": {"a": {"gt": 2}}})
         self.assertEqual(IsIn('a', [1, 2, 3]).build(), {'terms': {'a': [1, 2, 3]}})
+        self.assertEqual(Like('a', 'a*b').build(), {'wildcard': {'a': 'a*b'}})
+        self.assertEqual(Rlike('a', 'a*b').build(), {'regexp': {'a': 'a*b'}})
+        self.assertEqual(Startswith('a', 'jj').build(), {'prefix': {'a': 'jj'}})
         self.assertEqual(Null('a').build(), {'missing': {'field': 'a'}})
         self.assertEqual(ScriptFilter('doc["num1"].value > params.param1', params={'param1': 5}).build(),
                          {'script': {

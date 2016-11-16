@@ -8,6 +8,9 @@ class Column(object):
     def __init__(self, field):
         self._field = field
 
+    def field_name(self):
+        return self._field
+
     def __eq__(self, other):
         return Equal(field=self._field, value=other)
 
@@ -29,8 +32,14 @@ class Column(object):
     def isin(self, other):
         return IsIn(field=self._field, value=other)
 
-    def field_name(self):
-        return self._field
+    def like(self, other):
+        return Like(field=self._field, value=other)
+
+    def rlike(self, other):
+        return Rlike(field=self._field, value=other)
+
+    def startswith(self, other):
+        return Startswith(field=self._field, value=other)
 
     def ranges(self, range_list):
         return RangeGrouper(field=self._field, range_list=range_list)

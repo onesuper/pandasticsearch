@@ -23,6 +23,9 @@ class TestSchema(unittest.TestCase):
         self._assert_equal_filter(col == 2, Equal('b', 2))
         self._assert_equal_filter(col != 2, ~Equal('b', 2))
         self._assert_equal_filter(col.isin([1, 2, 3]), IsIn('b', [1, 2, 3]))
+        self._assert_equal_filter(col.like('a*b'), Like('b', 'a*b'))
+        self._assert_equal_filter(col.rlike('a*b'), Rlike('b', 'a*b'))
+        self._assert_equal_filter(col.startswith('jj'), Startswith('b', 'jj'))
 
     def _assert_equal_filter(self, x, y):
         self.assertTrue(x, BooleanFilter)

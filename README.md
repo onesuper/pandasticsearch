@@ -48,11 +48,32 @@ df.columns
 df.name
 # Column('name')
 
-# Filter
+# Filter by a boolean condition
 df.filter(df.age < 13).collect()
 # [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
 
-# Project
+# More complex example
+df.filter(df.age < 13 & df.gender == 'male').collect()
+# Row(age=11,gender='male',name='Bob')]
+
+# Filter by a wildcard (SQL `like`)
+df.filter(df.name.like('A*')).collect()
+# [Row(age=12,gender='female',name='Alice')]
+
+# Filter by a regular expression (SQL `rlike`)
+df.filter(df.name.rlike('A.l.e')).collect()
+# [Row(age=12,gender='female',name='Alice')]
+
+# Filter by a string pattern (prefix)
+df.filter(df.name.startswith('Al')).collect()
+# [Row(age=12,gender='female',name='Alice')]
+
+# Filter by a script
+from pandasticsearch.operators import ScriptFilter
+df.filter(ScriptFilter('2016 - doc["age"].value > 1995')).collect()
+# [Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+
+# Projection
 df.filter(df.age < 25).select('name', 'age').collect()
 # [Row(age=12,name='Alice'), Row(age=11,name='Bob'), Row(age=13,name='Leo')]
 
@@ -68,9 +89,14 @@ df.filter(df.age < 25).select('name').show(3)
 
 # Sort
 df.sort(df.age.asc).select('name', 'age').collect()
-#[Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+# [Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
 
-# Aggregate
+# Sort by a script
+from pandasticsearch.operators import ScriptSorter
+df.sort(ScriptSorter('doc["age"].value * 2')).collect()
+# [Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+
+# Aggregation
 df[df.gender == 'male'].agg(df.age.avg).collect()
 # [Row(avg(age)=12)]
 
@@ -82,27 +108,18 @@ df.groupby('gender').collect()
 df.groupby('gender').agg(df.age.max).collect()
 # [Row(doc_count=1, max(age)=12), Row(doc_count=2, max(age)=13)]
 
-# Convert to Pandas object for subsequent analysis
-df[df.gender == 'male'].agg(df.age.avg).to_pandas()
-#    avg(age)
-# 0        12
-
-# Groupby a set of ranges
+# Group by a set of ranges
 df.groupby(df.age.ranges([10,12,14])).to_pandas()
 #                   doc_count
 # range(10,12,14)
 # 10.0-12.0                 2
 # 12.0-14.0                 1
 
-# Filter by scripting
-from pandasticsearch.operators import ScriptFilter
-df.filter(ScriptFilter('2016 - doc["age"].value > 1995')).collect()
-# [Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+# Convert to Pandas object for subsequent analysis
+df[df.gender == 'male'].agg(df.age.avg).to_pandas()
+#    avg(age)
+# 0        12
 
-# Sory by scripting
-from pandasticsearch.operators import ScriptSorter
-df.sort(ScriptSorter('doc["age"].value * 2')).collect()
-#[Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
 ```
 
 

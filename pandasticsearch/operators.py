@@ -218,6 +218,24 @@ class IsIn(BooleanFilter):
         self._filter = {'terms': {field: value}}
 
 
+class Like(BooleanFilter):
+    def __init__(self, field, value):
+        super(Like, self).__init__()
+        self._filter = {'wildcard': {field: value}}
+
+
+class Rlike(BooleanFilter):
+    def __init__(self, field, value):
+        super(Rlike, self).__init__()
+        self._filter = {'regexp': {field: value}}
+
+
+class Startswith(BooleanFilter):
+    def __init__(self, field, value):
+        super(Startswith, self).__init__()
+        self._filter = {'prefix': {field: value}}
+
+
 class Null(BooleanFilter):
     def __init__(self, field):
         super(Null, self).__init__()
