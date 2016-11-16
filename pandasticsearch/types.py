@@ -73,6 +73,10 @@ class Column(object):
         return MetricAggregator(self._field, 'avg')
 
     @property
+    def sum(self):
+        return MetricAggregator(self._field, 'sum')
+
+    @property
     def value_count(self):
         return MetricAggregator(self._field, 'value_count')
 
