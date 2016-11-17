@@ -10,3 +10,5 @@ pandasticsearch/__pycache__/
 pandasticsearch/utils/__pycache__/
 tests/__pycache__/
 tests/utils/__pycache__/
+/doc/_build/
+/.doc/

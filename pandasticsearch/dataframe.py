@@ -20,6 +20,7 @@ class DataFrame(object):
     >>> df = DataFrame.from_es('http://localhost:9200', index='people')
 
     It can be converted to Pandas object for subsequent analysis.
+
     >>> df.to_pandas()
     """
 
@@ -51,13 +52,16 @@ class DataFrame(object):
     @staticmethod
     def from_es(url, index, doc_type=None):
         """
-        Creates an :class:`DataFrame` object by providing the URL of ElasticSearch node and the name of the index.
+        Creates an :class:`DataFrame <DataFrame>` object by providing the URL of ElasticSearch node and the name of the index.
 
         :param str url: URL of the node connected to
         :param str index: The name of the index
         :param str doc_type: The type of the document
         :return: DataFrame object for accessing
         :rtype: DataFrame
+
+        >>> from pandasticsearch import DataFrame
+        >>> df = DataFrame.from_es('http://localhost:9200', index='people')
         """
         # get mapping structure from server
         if doc_type is None:
@@ -75,7 +79,7 @@ class DataFrame(object):
 
     def __getattr__(self, name):
         """
-        Returns the :class:`Column` denoted by ``name``.
+        Returns a :class:`types.Column <pandasticsearch.types.Column>` object denoted by ``name``.
         """
         if name not in self.columns:
             raise AttributeError(
@@ -95,11 +99,11 @@ class DataFrame(object):
 
     def filter(self, condition):
         """
-        Filters rows using a given condition
+        Filters rows using a given condition.
 
         where() is an alias for filter().
 
-        :param condition: BooleanCond object
+        :param condition: :class:`BooleanFilter <pandasticsearch.operators.BooleanFilter>` object
 
         >>> df.filter(df['age'] < 13).collect()
         [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
@@ -117,9 +121,9 @@ class DataFrame(object):
 
     def select(self, *cols):
         """
-        Projects a set of columns and returns a new L{DataFrame}
+        Projects a set of columns and returns a new :class:`DataFrame <DataFrame>`
 
-        :param cols: list of column names or L{Column}.
+        :param cols: list of column names or :class:`Column <pandasticsearch.types.Column>`.
 
         >>> df.filter(df['age'] < 25).select('name', 'age').collect()
         [Row(age=12,name='Alice'), Row(age=11,name='Bob'), Row(age=13,name='Leo')]
@@ -155,6 +159,11 @@ class DataFrame(object):
                          limit=num)
 
     def groupby(self, *cols):
+        """
+        Returns a new :class:`DataFrame <DataFrame>` object grouped by the specified column(s).
+
+        :param cols: A list of column names, :class:`Column <pandasticsearch.types.Column>` or :class:`Grouper <pandasticsearch.operators.Grouper>` objects
+        """
         columns = []
 
         if len(cols) == 1 and isinstance(cols[0], RangeGrouper):
@@ -182,7 +191,8 @@ class DataFrame(object):
     def agg(self, *aggs):
         """
         Aggregate on the entire DataFrame without groups.
-        :param aggs: aggregate functions
+
+        :param aggs: a list of :class:`Aggregator <pandasticsearch.operators.Aggregator>` objects
 
         >>> df[df['gender'] == 'male'].agg(df['age'].avg).collect()
         [Row(avg(age)=12)]
@@ -201,9 +211,10 @@ class DataFrame(object):
                          limit=self._limit)
 
     def sort(self, *cols):
-        """Returns a new :class:`DataFrame` sorted by the specified column(s).
+        """
+        Returns a new :class:`DataFrame <DataFrame>` object sorted by the specified column(s).
 
-        :param cols: list of :class:`Column`to sort by.
+        :param cols: A list of column names, :class:`Column <pandasticsearch.types.Column>` or :class:`Sorter <pandasticsearch.operators.Sorter>`.
 
         orderby() is an alias for sort().
 
@@ -237,7 +248,7 @@ class DataFrame(object):
         """
         Returns all the records as a list of Row.
 
-        :return: list of L{Row}
+        :return: list of :class:`Row <pandasticsearch.types.Row>`
 
         >>> df.collect()
         [Row(age=2, name='Alice'), Row(age=5, name='Bob')]
@@ -248,6 +259,7 @@ class DataFrame(object):
     def to_pandas(self):
         """
         Export to a Pandas DataFrame object.
+
         :return: The DataFrame representing the query result
 
         >>> df[df['gender'] == 'male'].agg(Avg('age')).to_pandas()
@@ -260,6 +272,7 @@ class DataFrame(object):
     def count(self):
         """
         Returns the number of rows in this index/type.
+
         >>> df.count()
         2
         """
@@ -301,13 +314,14 @@ class DataFrame(object):
 
     def print_debug(self):
         """
-        Return a indented JSON string returned by the Elasticsearch Server
+        Post the query to the Elasticsearch Server and prints out the result it returned
         """
         sys.stdout.write(json.dumps(self._client.post(data=self._build_query()), indent=4))
 
     def to_dict(self):
         """
-        Converts the current :class:`DataFrame` to Elasticsearch search dictionary.
+        Converts the current :class:`DataFrame <DataFrame>` object to Elasticsearch search dictionary.
+
         :return: a dictionary which obeys the Elasticsearch RESTful protocol
         """
         return self._build_query()
@@ -335,6 +349,7 @@ class DataFrame(object):
     def columns(self):
         """
         Returns all column names as a list.
+
         :return: column names as a list
 
         >>> df.columns
@@ -344,6 +359,9 @@ class DataFrame(object):
 
     @property
     def schema(self):
+        """
+        Returns the schema(mapping) of the index/type as a dictionary.
+        """
         return self._mapping
 
     def _build_query(self):

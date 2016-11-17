@@ -10,17 +10,15 @@ from pandasticsearch.errors import ServerDefinedException
 class RestClient(object):
     """
     RestClient talks to Elasticsearch cluster through native RESTful API.
-    Returns Query objects that can be used to export to pandas.DataFrame objects for subsequent analysis.
-    :param str url: URL of Broker node in the Elasticsearch cluster
-    :param str endpoint: Endpoint that Broker listens for queries on
-
-    :Example:
-    >>> from pandasticsearch import RestClient
-    >>> client = RestClient('http://localhost:9200', 'index/type/_search')
-    >>> result_dict = client.post("query":{"match_all":{}}})
     """
 
     def __init__(self, url, endpoint=''):
+        """
+        Initialize the RESTful from the keyword arguments.
+
+        :param str url: URL of Broker node in the Elasticsearch cluster
+        :param str endpoint: Endpoint that Broker listens for queries on
+        """
         self.url = url
         self.endpoint = endpoint
 
@@ -31,10 +29,19 @@ class RestClient(object):
             url = self.url + '/' + self.endpoint
         return url
 
-    def get(self, **kwargs):
+    def get(self, params=None):
+        """
+        Sends a GET request to Elasticsearch.
+
+        :param optional params: Dictionary to be sent in the query string.
+        :return: The response as a dictionary.
+
+        >>> from pandasticsearch import RestClient
+        >>> client = RestClient('http://localhost:9200', '_mapping/index')
+        >>> print(client.get())
+        """
         try:
             url = self._prepare_url()
-            params = kwargs.get('params', None)
 
             if params is not None:
                 url = '{0}?{1}'.format(url, urllib.parse.urlencode(params))
@@ -58,11 +65,20 @@ class RestClient(object):
         else:
             return json.loads(data)
 
-    def post(self, **kwargs):
+    def post(self, data, params=None):
+        """
+        Sends a POST request to Elasticsearch.
+
+        :param data: The json data to send in the body of the request.
+        :param optional params: Dictionary to be sent in the query string.
+        :return: The response as a dictionary.
+
+        >>> from pandasticsearch import RestClient
+        >>> client = RestClient('http://localhost:9200', 'index/type/_search')
+        >>> print(client.post(data={"query":{"match_all":{}}}))
+        """
         try:
             url = self._prepare_url()
-            data = kwargs.get('data', None)
-            params = kwargs.get('params', None)
 
             if params is not None:
                 url = '{0}?{1}'.format(url, urllib.parse.urlencode(params))

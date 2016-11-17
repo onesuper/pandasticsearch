@@ -20,6 +20,8 @@ pip install pandasticsearch[pandas]
   into [Pandas](http://pandas.pydata.org) DataFrame objects for subsequent data analysis.
   
 
+Checkout the API doc: [http://pandasticsearch.readthedocs.io/en/latest/](http://pandasticsearch.readthedocs.io/en/latest/).
+
 ## Usage
 
 ### DataFrame API
@@ -120,7 +122,7 @@ df[df.gender == 'male'].agg(df.age.avg).to_pandas()
 #    avg(age)
 # 0        12
 
-# Advanced ES functinality
+# Advanced ES functionality
 df.groupby(df.gender).agg(df.age.stats).to_pandas()
 df.agg(df.age.extended_stats).to_pandas()
 df.agg(df.age.percentiles).to_pandas()
