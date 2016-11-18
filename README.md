@@ -46,34 +46,11 @@ df.print_schema()
 df.columns
 #['name', 'age', 'gender']
 
-# Get the column
+# Denote a column
 df.name
 # Column('name')
-
-# Filter by a boolean condition
-df.filter(df.age < 13).collect()
-# [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
-
-# More complex example
-df.filter(df.age < 13 & df.gender == 'male').collect()
-# Row(age=11,gender='male',name='Bob')]
-
-# Filter by a wildcard (SQL `like`)
-df.filter(df.name.like('A*')).collect()
-# [Row(age=12,gender='female',name='Alice')]
-
-# Filter by a regular expression (SQL `rlike`)
-df.filter(df.name.rlike('A.l.e')).collect()
-# [Row(age=12,gender='female',name='Alice')]
-
-# Filter by a string pattern (prefix)
-df.filter(df.name.startswith('Al')).collect()
-# [Row(age=12,gender='female',name='Alice')]
-
-# Filter by a script
-from pandasticsearch.operators import ScriptFilter
-df.filter(ScriptFilter('2016 - doc["age"].value > 1995')).collect()
-# [Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+df['age']
+# Column('age')
 
 # Projection
 df.filter(df.age < 25).select('name', 'age').collect()
@@ -89,15 +66,49 @@ df.filter(df.age < 25).select('name').show(3)
 # | Leo  |
 # +------+
 
-# Sort
-df.sort(df.age.asc).select('name', 'age').collect()
-# [Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+# Convert to Pandas object for subsequent analysis
+df[df.gender == 'male'].agg(df.age.avg).to_pandas()
+#    avg(age)
+# 0        12
 
-# Sort by a script
-from pandasticsearch.operators import ScriptSorter
-df.sort(ScriptSorter('doc["age"].value * 2')).collect()
-# [Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+# Translate the DataFrame to an ES query (dictionary)
+df[df.gender == 'male'].agg(df.age.avg).to_dict()
+# {'query': {'filtered': {'filter': {'term': {'gender': 'male'}}}}, 'aggregations': {'avg(birthYear)':
+# {'avg': {'field': 'birthYear'}}}, 'size': 0}
+```
 
+### Filter
+
+```python
+# Filter by a boolean condition
+df.filter(df.age < 13).collect()
+# [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
+
+# Filter by a set of boolean conditions
+df.filter(df.age < 13 & df.gender == 'male').collect()
+# Row(age=11,gender='male',name='Bob')]
+
+# Filter by a wildcard (sql `like`)
+df.filter(df.name.like('A*')).collect()
+# [Row(age=12,gender='female',name='Alice')]
+
+# Filter by a regular expression (sql `rlike`)
+df.filter(df.name.rlike('A.l.e')).collect()
+# [Row(age=12,gender='female',name='Alice')]
+
+# Filter by a prefixed string pattern
+df.filter(df.name.startswith('Al')).collect()
+# [Row(age=12,gender='female',name='Alice')]
+
+# Filter by a script
+from pandasticsearch.operators import ScriptFilter
+df.filter(ScriptFilter('2016 - doc["age"].value > 1995')).collect()
+# [Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+```
+
+
+### Aggregation
+```python
 # Aggregation
 df[df.gender == 'male'].agg(df.age.avg).collect()
 # [Row(avg(age)=12)]
@@ -117,17 +128,23 @@ df.groupby(df.age.ranges([10,12,14])).to_pandas()
 # 10.0-12.0                 2
 # 12.0-14.0                 1
 
-# Convert to Pandas object for subsequent analysis
-df[df.gender == 'male'].agg(df.age.avg).to_pandas()
-#    avg(age)
-# 0        12
-
-# Advanced ES functionality
+# Advanced ES aggregation
 df.groupby(df.gender).agg(df.age.stats).to_pandas()
 df.agg(df.age.extended_stats).to_pandas()
 df.agg(df.age.percentiles).to_pandas()
 ```
 
+### Sort
+```python
+# Sort
+df.sort(df.age.asc).select('name', 'age').collect()
+# [Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+
+# Sort by a script
+from pandasticsearch.operators import ScriptSorter
+df.sort(ScriptSorter('doc["age"].value * 2')).collect()
+# [Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
+```
 
 ## Use with Another Python Client
 
@@ -157,7 +174,7 @@ es = Elasticsearch('http://localhost:9200')
 result_dict = es.search(index="recruit", body={"query": {"match_all": {}}})
 
 from pandasticsearch import Select
-Select.from_dict(result_dict).to_pandas()
+pandas_df = Select.from_dict(result_dict).to_pandas()
 ```
 
 
