@@ -35,7 +35,6 @@ class DataFrame(object):
     def __init__(self, **kwargs):
         self._client = kwargs.get('client', None)
         self._mapping = kwargs.get('mapping', None)
-
         self._index = list(self._mapping.keys())[0] if self._mapping else None
         self._doc_type = DataFrame._get_doc_type(self._mapping) if self._mapping else None
         self._columns = sorted(DataFrame._get_cols(self._mapping)) if self._mapping else None
@@ -281,7 +280,8 @@ class DataFrame(object):
 
         res_dict = self._client.post(data=self._build_query())
         if self._aggregation is None and self._groupby is None:
-            query = Select.from_dict(res_dict)
+            query = Select()
+            query.explain_result(res_dict)
         else:
             query = Agg.from_dict(res_dict)
         return query
@@ -319,6 +319,7 @@ class DataFrame(object):
         [2, 1]
         """
         df = DataFrame(client=self._client,
+                       include_meta_fields=self._include_meta_fields,
                        mapping=self._mapping,
                        filter=self._filter,
                        groupby=self._groupby,
@@ -348,7 +349,7 @@ class DataFrame(object):
         assert n > 0
 
         if self._aggregation:
-            raise TypeError('show() is not allowed for aggregation. use collect() instead')
+            raise DataFrameException('show() is not allowed for aggregation. use collect() instead')
 
         query = self._execute()
 
@@ -356,6 +357,10 @@ class DataFrame(object):
             cols = [col.field_name() for col in self._projection]
         else:
             cols = self.columns
+
+        if cols is None:
+            raise _unbound_index_err
+
         sys.stdout.write(query.result_as_tabular(cols, n, truncate))
         sys.stdout.write('time: {0}ms\n'.format(query.millis_taken))
 

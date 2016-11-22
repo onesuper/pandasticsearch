@@ -76,7 +76,16 @@ class Select(Query):
 
     def explain_result(self, result=None):
         super(Select, self).explain_result(result)
-        self._values = [hit['_source'] for hit in self._result_dict['hits']['hits']]
+        rows = []
+        for hit in self._result_dict['hits']['hits']:
+            row = {}
+            for k in hit.keys():
+                if k == '_source':
+                    row.update(hit['_source'])
+                elif k.startswith('_'):
+                    row[k] = hit[k]
+            rows.append(row)
+        self._values = rows
 
     def to_pandas(self):
         try:
