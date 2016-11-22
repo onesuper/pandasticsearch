@@ -313,13 +313,21 @@ class DataFrame(object):
 
     def count(self):
         """
-        Returns the number of rows in this index/type.
+        Returns a list of numbers indicating the count for each group
 
-        >>> df.count()
-        2
+        >>> df.groupby(df.gender).count()
+        [2, 1]
         """
-        _df = self.agg(MetricAggregator('_index', 'value_count'))
-        return _df.collect()[0]['count(*)']
+        df = DataFrame(client=self._client,
+                       mapping=self._mapping,
+                       filter=self._filter,
+                       groupby=self._groupby,
+                       aggregation=MetricAggregator('_index', 'value_count').build(),
+                       projection=self._projection,
+                       sort=self._sort,
+                       limit=self._limit)
+        cnt_row = df.collect()
+        return list(map(lambda x: x['value_count(_index)'], cnt_row))
 
     def show(self, n=10000, truncate=15):
         """
