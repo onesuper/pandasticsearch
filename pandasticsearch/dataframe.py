@@ -3,13 +3,15 @@
 from pandasticsearch.client import RestClient
 from pandasticsearch.queries import Agg, Select
 from pandasticsearch.operators import *
-from pandasticsearch.types import Column
-from pandasticsearch.types import Row
+from pandasticsearch.types import Column, Row
+from pandasticsearch.errors import DataFrameException
 
 import json
 import six
-import copy
 import sys
+import copy
+
+_unbound_index_err = DataFrameException('DataFrame is not bound to ES index')
 
 
 class DataFrame(object):
@@ -19,28 +21,25 @@ class DataFrame(object):
     >>> from pandasticsearch import DataFrame
     >>> df = DataFrame.from_es('http://localhost:9200', index='people')
 
-    It can be converted to Pandas object for subsequent analysis.
+    Customizing the endpoint of the ElasticSearch:
+
+    >>> from pandasticsearch import DataFrame
+    >>> from pandasticsearch.client import RestClient
+    >>> df = DataFrame(client=RestClient('http://host:port/v2/_search',), index='people')
+
+    It can be converted to Pandas object for subsequent analysis:
 
     >>> df.to_pandas()
     """
 
-    def __init__(self, client, mapping, **kwargs):
-        cols = []
-        for index, mappings in six.iteritems(mapping):
-            self._index = index
-            for _, properties in six.iteritems(mappings['mappings']):
-                for k, _ in six.iteritems(properties['properties']):
-                    cols.append(k)
+    def __init__(self, **kwargs):
+        self._client = kwargs.get('client', None)
+        self._mapping = kwargs.get('mapping', None)
 
-        if self._index is None:
-            raise Exception('No index in [{0}]'.format(mapping))
+        self._index = list(self._mapping.keys())[0] if self._mapping else None
+        self._doc_type = DataFrame._get_doc_type(self._mapping) if self._mapping else None
+        self._columns = sorted(DataFrame._get_cols(self._mapping)) if self._mapping else None
 
-        if len(cols) == 0:
-            raise Exception('0 columns found in [{0}]'.format(self._index))
-
-        self._client = client
-        self._columns = sorted(cols)
-        self._mapping = mapping
         self._filter = kwargs.get('filter', None)
         self._groupby = kwargs.get('groupby', None)
         self._aggregation = kwargs.get('aggregation', None)
@@ -48,6 +47,39 @@ class DataFrame(object):
         self._projection = kwargs.get('projection', None)
         self._limit = kwargs.get('limit', None)
         self._last_query = None
+
+    @property
+    def index(self):
+        """
+        Returns the index name.
+
+        :return: string as the name
+
+        >>> df.index
+        people/children
+        """
+        if self._index is None:
+            return None
+        return self._index + '/' + self._doc_type if self._doc_type else self._index
+
+    @property
+    def columns(self):
+        """
+        Returns all column names as a list.
+
+        :return: column names as a list
+
+        >>> df.columns
+        ['age', 'name']
+        """
+        return self._columns
+
+    @property
+    def schema(self):
+        """
+        Returns the schema(mapping) of the index/type as a dictionary.
+        """
+        return self._mapping
 
     @staticmethod
     def from_es(url, index, doc_type=None):
@@ -75,7 +107,8 @@ class DataFrame(object):
             endpoint = index + '/_search'
         else:
             endpoint = index + '/' + doc_type + '/_search'
-        return DataFrame(RestClient(url, endpoint), mapping)
+        return DataFrame(client=RestClient(url, endpoint),
+                         mapping=mapping, index=index, doc_type=doc_type)
 
     def __getattr__(self, name):
         """
@@ -88,7 +121,7 @@ class DataFrame(object):
 
     def __getitem__(self, item):
         if isinstance(item, six.string_types):
-            if item not in self._columns:
+            if item not in self.columns:
                 raise TypeError('Column does not exist: [{0}]'.format(item))
             return Column(item)
         elif isinstance(item, BooleanFilter):
@@ -109,7 +142,8 @@ class DataFrame(object):
         [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
         """
         assert isinstance(condition, BooleanFilter)
-        return DataFrame(self._client, self._mapping,
+        return DataFrame(client=self._client,
+                         mapping=self._mapping,
                          filter=condition.build(),
                          groupby=self._groupby,
                          aggregation=self._aggregation,
@@ -128,19 +162,20 @@ class DataFrame(object):
         >>> df.filter(df['age'] < 25).select('name', 'age').collect()
         [Row(age=12,name='Alice'), Row(age=11,name='Bob'), Row(age=13,name='Leo')]
         """
-        columns = []
+        projection = []
         for col in cols:
             if isinstance(col, six.string_types):
-                columns.append(getattr(self, col))
+                projection.append(getattr(self, col))
             elif isinstance(col, Column):
-                columns.append(col)
+                projection.append(col)
             else:
                 raise TypeError('{0} is supposed to be str or Column'.format(col))
-        return DataFrame(self._client, self._mapping,
+        return DataFrame(client=self._client,
+                         mapping=self._mapping,
                          filter=self._filter,
                          groupby=self._groupby,
                          aggregation=self._aggregation,
-                         projection=columns,
+                         projection=projection,
                          sort=self._sort,
                          limit=self._limit)
 
@@ -150,7 +185,8 @@ class DataFrame(object):
         """
         assert isinstance(num, int)
         assert num >= 1
-        return DataFrame(self._client, self._mapping,
+        return DataFrame(client=self._client,
+                         mapping=self._mapping,
                          filter=self._filter,
                          groupby=self._groupby,
                          aggregation=self._aggregation,
@@ -180,7 +216,8 @@ class DataFrame(object):
             names = [col.field_name() for col in columns]
             groupby = Grouper.from_list(names).build()
 
-        return DataFrame(self._client, self._mapping,
+        return DataFrame(client=self._client,
+                         mapping=self._mapping,
                          filter=self._filter,
                          groupby=groupby,
                          aggregation=self._aggregation,
@@ -202,7 +239,8 @@ class DataFrame(object):
             assert isinstance(agg, Aggregator)
             aggregation.update(agg.build())
 
-        return DataFrame(self._client, self._mapping,
+        return DataFrame(client=self._client,
+                         mapping=self._mapping,
                          filter=self._filter,
                          groupby=self._groupby,
                          aggregation=aggregation,
@@ -226,7 +264,8 @@ class DataFrame(object):
             assert isinstance(col, Sorter)
             sorts.append(col.build())
 
-        return DataFrame(self._client, self._mapping,
+        return DataFrame(client=self._client,
+                         mapping=self._mapping,
                          filter=self._filter,
                          groupby=self._groupby,
                          aggregation=self._aggregation,
@@ -237,6 +276,9 @@ class DataFrame(object):
     orderby = sort
 
     def _execute(self):
+        if self._client is None:
+            raise _unbound_index_err
+
         res_dict = self._client.post(data=self._build_query())
         if self._aggregation is None and self._groupby is None:
             query = Select.from_dict(res_dict)
@@ -297,7 +339,7 @@ class DataFrame(object):
         """
         assert n > 0
 
-        if self._aggregation is not None:
+        if self._aggregation:
             raise TypeError('show() is not allowed for aggregation. use collect() instead')
 
         query = self._execute()
@@ -305,17 +347,21 @@ class DataFrame(object):
         if self._projection:
             cols = [col.field_name() for col in self._projection]
         else:
-            cols = self._columns
+            cols = self.columns
         sys.stdout.write(query.result_as_tabular(cols, n, truncate))
         sys.stdout.write('time: {0}ms\n'.format(query.millis_taken))
 
     def __repr__(self):
-        return "DataFrame[%s]" % (", ".join("%s" % c for c in self._columns))
+        if self.columns is None:
+            return "DataFrame(Unbound)"
+        return "DataFrame[%s]" % (", ".join("%s" % c for c in self.columns))
 
     def print_debug(self):
         """
         Post the query to the Elasticsearch Server and prints out the result it returned
         """
+        if self._client is None:
+            raise _unbound_index_err
         sys.stdout.write(json.dumps(self._client.post(data=self._build_query()), indent=4))
 
     def to_dict(self):
@@ -338,31 +384,15 @@ class DataFrame(object):
           |-- mobile :  {'index': 'not_analyzed', 'type': 'string'}
           |-- regions :  {'index': 'not_analyzed', 'type': 'string'}
         """
-        for index, mappings in six.iteritems(self._mapping):
-            sys.stdout.write('{0}\n'.format(index))
-            for typ, properties in six.iteritems(mappings['mappings']):
-                sys.stdout.write('|--{0}\n'.format(typ))
-                for k, v in six.iteritems(properties['properties']):
-                    sys.stdout.write('  |--{0}: {1}\n'.format(k, v))
+        if self._index is None:
+            return
 
-    @property
-    def columns(self):
-        """
-        Returns all column names as a list.
-
-        :return: column names as a list
-
-        >>> df.columns
-        ['age', 'name']
-        """
-        return self._columns
-
-    @property
-    def schema(self):
-        """
-        Returns the schema(mapping) of the index/type as a dictionary.
-        """
-        return self._mapping
+        sys.stdout.write('{0}\n'.format(self._index))
+        m = self._mapping.values()[0]  # {'index': {}}
+        for typ, properties in six.iteritems(m['mappings']):
+            sys.stdout.write('|--{0}\n'.format(typ))
+            for k, v in six.iteritems(properties['properties']):
+                sys.stdout.write('  |--{0}: {1}\n'.format(k, v))
 
     def _build_query(self):
         query = dict()
@@ -406,3 +436,23 @@ class DataFrame(object):
             query['sort'] = self._sort
         self._last_query = query
         return query
+
+    @classmethod
+    def _get_cols(cls, mapping):
+        cols = []
+        index = list(mapping.values())[0]  # {'index': {}}
+        for _, properties in six.iteritems(index['mappings']):
+            for k, _ in six.iteritems(properties['properties']):
+                cols.append(k)
+
+        if len(cols) == 0:
+            raise Exception('0 columns found in mapping')
+        return cols
+
+    @classmethod
+    def _get_doc_type(cls, mapping):
+        index = list(mapping.values())[0]  # {'index': {}}
+        if len(index['mappings'].keys()) == 1:
+            return list(index['mappings'].keys())[0]
+        else:
+            return None

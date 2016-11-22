@@ -9,7 +9,7 @@ from pandasticsearch.operators import *
 @patch('pandasticsearch.client.urllib.request.urlopen')
 def create_df_from_es(mock_urlopen):
     response = Mock()
-    dic = {"index": {"mappings": {"type": {"properties": {"a": {"type": "integer"},
+    dic = {"index": {"mappings": {"doc_type": {"properties": {"a": {"type": "integer"},
                                                           "b": {"type": "integer"}}}}}}
     response.read.return_value = json.dumps(dic).encode("utf-8")
     mock_urlopen.return_value = response

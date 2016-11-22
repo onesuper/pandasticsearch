@@ -16,3 +16,6 @@ class ServerDefinedException(PandasticSearchException):
 class ParseResultException(PandasticSearchException):
     pass
 
+
+class DataFrameException(PandasticSearchException):
+    pass
