@@ -401,8 +401,8 @@ class DataFrame(object):
             return
 
         sys.stdout.write('{0}\n'.format(self._index))
-        m = self._mapping.values()[0]  # {'index': {}}
-        for typ, properties in six.iteritems(m['mappings']):
+        index = list(self._mapping.values())[0]  # {'index': {}}
+        for typ, properties in six.iteritems(index['mappings']):
             sys.stdout.write('|--{0}\n'.format(typ))
             for k, v in six.iteritems(properties['properties']):
                 sys.stdout.write('  |--{0}: {1}\n'.format(k, v))
