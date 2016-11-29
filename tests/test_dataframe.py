@@ -13,7 +13,7 @@ def create_df_from_es(mock_urlopen):
                                                           "b": {"type": "integer"}}}}}}
     response.read.return_value = json.dumps(dic).encode("utf-8")
     mock_urlopen.return_value = response
-    return DataFrame.from_es("http://localhost:9200", 'xxx')
+    return DataFrame.from_es(url="http://localhost:9200", index='xxx')
 
 
 class TestDataFrame(unittest.TestCase):
