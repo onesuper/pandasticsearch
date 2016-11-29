@@ -32,7 +32,7 @@ It is type-safe, easy-to-use and Pandas-flavored.
 ```python
 # Create a DataFrame object
 from pandasticsearch import DataFrame
-df = DataFrame.from_es('http://localhost:9200', index='people')
+df = DataFrame.from_es(url='http://localhost:9200', index='people')
 
 # Print the schema(mapping) of the index
 df.print_schema()

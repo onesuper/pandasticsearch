@@ -81,11 +81,11 @@ class DataFrame(object):
         return self._mapping
 
     @staticmethod
-    def from_es(url, index, doc_type=None):
+    def from_es(**kwargs):
         """
         Creates an :class:`DataFrame <DataFrame>` object by providing the URL of ElasticSearch node and the name of the index.
 
-        :param str url: URL of the node connected to
+        :param str url: URL of the node connected to (default: 'http://localhost:9200')
         :param str index: The name of the index
         :param str doc_type: The type of the document
         :return: DataFrame object for accessing
@@ -94,6 +94,13 @@ class DataFrame(object):
         >>> from pandasticsearch import DataFrame
         >>> df = DataFrame.from_es('http://localhost:9200', index='people')
         """
+
+        doc_type = kwargs.get('doc_type', None)
+        index = kwargs.get('index', None)
+        url = kwargs.get('url', 'http://localhost:9200')
+
+        if index is None:
+            raise ValueError('Index name must be specified')
         # get mapping structure from server
         if doc_type is None:
             mapping_endpoint = index
@@ -201,8 +208,11 @@ class DataFrame(object):
         """
         columns = []
 
-        if len(cols) == 1 and isinstance(cols[0], RangeGrouper):
-            groupby = cols[0].build()
+        if len(cols) == 1:
+            if isinstance(cols[0], RangeGrouper):
+                groupby = cols[0].build()
+            elif isinstance(cols[0], Grouper):
+                groupby = cols[0].build()
         else:
             for col in cols:
                 if isinstance(col, six.string_types):

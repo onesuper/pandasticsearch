@@ -1,6 +1,7 @@
 ### 0.3.0
 
 * support groupby date interval: `df.groupby(df.date.date_interval('1d'))`
+* parameter change: `DataFrame.from_es(..., index=...)` to `DataFrame.from_es(url=..., index=...)`
 
 ### 0.2.0
 
