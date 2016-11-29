@@ -141,7 +141,7 @@ class Select(Query):
                 if col in kv:
                     s = Select._stringfy_value(kv[col])
                     if len(s) > truncate:
-                        s = s[:truncate-3] + '...'
+                        s = s[:truncate - 3] + '...'
                 else:
                     s = '(NULL)'
                 row.append(s)
@@ -169,6 +169,10 @@ class Agg(Query):
             if len(index) > 0:
                 self._indexes.append(index)
 
+    @property
+    def index(self):
+        return self._indexes
+
     def to_pandas(self):
         try:
             import pandas
@@ -195,14 +199,21 @@ class Agg(Query):
             if isinstance(v, dict):
                 if 'buckets' in v:
                     for sub_bucket in v['buckets']:
-                        for x in Agg._process_agg(sub_bucket, indexes + (sub_bucket['key'],), names + (k,)):
+
+                        if 'key_as_string' in sub_bucket:
+                            key = sub_bucket['key_as_string']
+                        else:
+                            key = sub_bucket['key']
+                        for x in Agg._process_agg(sub_bucket,
+                                                  indexes + (key,),
+                                                  names + (k,)):
                             yield x
                 elif 'value' in v:
                     row[k] = v['value']
                 elif 'values' in v:  # percentiles
                     row = v['values']
                 else:
-                    row.update(v)    # stats
+                    row.update(v)  # stats
             else:
                 if k == 'doc_count':  # count docs
                     row['doc_count'] = v

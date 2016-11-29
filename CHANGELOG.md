@@ -1,3 +1,6 @@
+### 0.3.0
+
+* support groupby date interval: `df.groupby(df.date.date_interval('1d'))`
 
 ### 0.2.0
 

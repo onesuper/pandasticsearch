@@ -28,6 +28,12 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(range_grouper.build(), {
             'range(1,3,6)': {'range': {'ranges': [{'to': 3, 'from': 1}, {'to': 6, 'from': 3}], 'field': 'a'}}})
 
+    def test_date_grouper(self):
+        g = DateGrouper('a', '1d', 'm')
+        print(g.build())
+        self.assertEqual(g.build(), {
+            'date(a,1d)': {'date_histogram': {'interval': '1d', 'field': 'a', 'format': 'm'}}})
+
     def test_sorter(self):
         self.assertEqual(Sorter('x').build(), {'x': {'order': 'desc'}})
         self.assertEqual(Sorter('x', mode='avg').build(), {'x': {'order': 'desc', 'mode': 'avg'}})

@@ -69,8 +69,64 @@ class TestQueries(unittest.TestCase):
 
         agg.explain_result()
         print(agg.result)
+        self.assertEqual(agg.result, [{'f1': 100, 'f2': 1, 'doc_count': 12},
+                                      {'f1': 200, 'f2': 2, 'doc_count': 13}])
+        self.assertEqual(agg.index, [('a',),
+                                     ('b',)])
 
-        self.assertEqual(agg.result, [{'f1': 100, 'f2': 1, 'doc_count': 12}, {'f1': 200, 'f2': 2, 'doc_count': 13}])
+    def test_agg_date_histogram(self):
+        agg = Agg()
+        agg._result_dict = {
+            'took': 3,
+            'aggregations': {
+                'my_date_histogram': {
+                    'buckets': [
+                        {
+                            'doc_count': 1,
+                            'key': 1480392360000,
+                            'key_as_string': '2016-11-29T04:06:00.000Z',
+                            'f1': {'value': 0.1},
+                        },
+                        {
+                            'doc_count': 1,
+                            'key': 1480392420000,
+                            'key_as_string': '2016-11-29T04:07:00.000Z',
+                            'f1': {'value': 0.2},
+                        },
+                        {
+                            'doc_count': 1,
+                            'key': 1480392480000,
+                            'key_as_string': '2016-11-29T04:08:00.000Z',
+                            'f1': {'value': 0.3},
+                        },
+                        {
+                            'doc_count': 1,
+                            'key': 1480392540000,
+                            'key_as_string': '2016-11-29T04:09:00.000Z',
+                            'f1': {'value': 0.4},
+                        },
+                        {
+                            'doc_count': 1,
+                            'key': 1480392600000,
+                            'key_as_string': '2016-11-29T04:10:00.000Z',
+                            'f1': {'value': 0.5},
+                        }
+                    ]
+                }
+            }
+        }
+        agg.explain_result()
+        print(agg.result)
+        self.assertEqual(agg.result, [{'f1': 0.1, 'doc_count': 1},
+                                      {'f1': 0.2, 'doc_count': 1},
+                                      {'f1': 0.3, 'doc_count': 1},
+                                      {'f1': 0.4, 'doc_count': 1},
+                                      {'f1': 0.5, 'doc_count': 1}])
+        self.assertEqual(agg.index, [('2016-11-29T04:06:00.000Z',),
+                                     ('2016-11-29T04:07:00.000Z',),
+                                     ('2016-11-29T04:08:00.000Z',),
+                                     ('2016-11-29T04:09:00.000Z',),
+                                     ('2016-11-29T04:10:00.000Z',)])
 
     def test_agg_nested_buckets(self):
         agg = Agg()
@@ -130,6 +186,10 @@ class TestQueries(unittest.TestCase):
                           {'f1': 200, 'f2': 2, 'doc_count': 12},
                           {'f1': 300, 'f2': 3, 'doc_count': 13},
                           {'f1': 400, 'f2': 4, 'doc_count': 14}])
+        self.assertEqual(agg.index, [('a', 'x'),
+                                     ('a', 'y'),
+                                     ('b', 'x'),
+                                     ('b', 'y')])
 
 
 if __name__ == '__main__':

@@ -132,6 +132,7 @@ df.groupby(df.age.ranges([10,12,14])).to_pandas()
 df.groupby(df.gender).agg(df.age.stats).to_pandas()
 df.agg(df.age.extended_stats).to_pandas()
 df.agg(df.age.percentiles).to_pandas()
+df.groupby(df.date.date_interval('1d')).to_pandas()
 ```
 
 ### Sort

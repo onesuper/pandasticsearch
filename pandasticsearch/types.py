@@ -84,6 +84,18 @@ class Column(object):
         """
         return RangeGrouper(field=self._field, range_list=values)
 
+    def date_interval(self, interval, format='y-M-d h:m:s'):
+        """
+        Returns a :class:`Grouper <pandasticsearch.operators.Grouper>`
+
+        :param interval: A string indicating date interval
+        :param format: Date format string
+        :return: :class:`Grouper <pandasticsearch.operators.Grouper>`
+
+        >>> df.groupby(df.date_interval('1d'))
+        """
+        return DateGrouper(field=self._field, interval=interval, format=format)
+
     @property
     def isnull(self):
         """

@@ -35,7 +35,7 @@ class Grouper(object):
                               'aggregations': self._outer.build()}}
 
 
-class RangeGrouper(object):
+class RangeGrouper(Grouper):
     def __init__(self, field, range_list):
         assert isinstance(range_list, list)
         self._field = field
@@ -50,6 +50,22 @@ class RangeGrouper(object):
 
         name = 'range(' + ','.join([str(x) for x in self._range_list]) + ')'
         return {name: {'range': {'field': self._field, 'ranges': ranges}}}
+
+
+class DateGrouper(Grouper):
+    def __init__(self, field, interval, format):
+        super(DateGrouper, self).__init__(field)
+        self._field = field
+        self._intervel = interval
+        self._format = format
+
+    def build(self):
+        name = 'date({0},{1})'.format(self._field, self._intervel)
+        return {name: {'date_histogram': {
+            'field': self._field,
+            'interval': self._intervel,
+            'format': self._format,
+        }}}
 
 
 class Scriptor(object):
