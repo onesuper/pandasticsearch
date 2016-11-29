@@ -208,11 +208,10 @@ class DataFrame(object):
         """
         columns = []
 
-        if len(cols) == 1:
-            if isinstance(cols[0], RangeGrouper):
-                groupby = cols[0].build()
-            elif isinstance(cols[0], Grouper):
-                groupby = cols[0].build()
+        if len(cols) == 1 and isinstance(cols[0], RangeGrouper):
+            groupby = cols[0].build()
+        elif len(cols) == 1 and isinstance(cols[0], Grouper):
+            groupby = cols[0].build()
         else:
             for col in cols:
                 if isinstance(col, six.string_types):
@@ -221,7 +220,6 @@ class DataFrame(object):
                     columns.append(col)
                 else:
                     raise TypeError('{0} is supposed to be str or Column'.format(col))
-
             names = [col.field_name() for col in columns]
             groupby = Grouper.from_list(names).build()
 
