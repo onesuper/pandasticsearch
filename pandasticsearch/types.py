@@ -84,7 +84,7 @@ class Column(object):
         """
         return RangeGrouper(field=self._field, range_list=values)
 
-    def date_interval(self, interval, format='y-M-d h:m:s'):
+    def date_interval(self, interval, format='yyyy/MM/dd HH:mm:ss'):
         """
         Returns a :class:`Grouper <pandasticsearch.operators.Grouper>`
 
