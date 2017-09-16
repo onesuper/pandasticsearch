@@ -1,3 +1,7 @@
+### 0.4.0
+
+* support customized terms aggregation: `df.groupby(df.age.terms(limit=10, include=[1, 2, 3]))`
+
 ### 0.3.0
 
 * support groupby date interval: `df.groupby(df.date.date_interval('1d'))`

@@ -96,6 +96,20 @@ class Column(object):
         """
         return DateGrouper(field=self._field, interval=interval, format=format)
 
+    def terms(self, limit=20, include=None, exclude=None):
+        """
+        Returns a :class:`Grouper <pandasticsearch.operators.Grouper>`
+
+        :param limit: limit the number of terms to be aggregated (default 20)
+        :param include: the exact term to be included
+        :param exclude: the exact term to be excluded
+
+        :return: :class:`Grouper <pandasticsearch.operators.Grouper>`
+
+        >>> df.groupby(df.age.terms(limit=10, include=[1, 2, 3]))
+        """
+        return Grouper(field=self._field, size=limit, include=include, exclude=exclude)
+
     @property
     def isnull(self):
         """

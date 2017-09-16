@@ -133,6 +133,9 @@ df.groupby(df.gender).agg(df.age.stats).to_pandas()
 df.agg(df.age.extended_stats).to_pandas()
 df.agg(df.age.percentiles).to_pandas()
 df.groupby(df.date.date_interval('1d')).to_pandas()
+
+# Customized aggregation terms
+df.groupby(df.age.terms(size=5, include=[1, 2, 3]))
 ```
 
 ### Sort

@@ -10,6 +10,12 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(MetricAggregator('x', 'max').build(), {'max(x)': {'max': {'field': 'x'}}})
 
     def test_grouper(self):
+        grouper = Grouper('a', size=100, include=['x', 'y'])
+        print(grouper.build())
+        self.assertEqual(grouper.build(),
+                         {'a': {'terms': {'field': 'a', 'size': 100, 'include': ['x', 'y']}}})
+
+    def test_nested_grouper(self):
         nested_grouper = Grouper('a', inner=Grouper('b', inner=Grouper('c')))
         print(nested_grouper.build())
         self.assertEqual(nested_grouper.build(),

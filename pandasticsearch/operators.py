@@ -15,10 +15,12 @@ class Aggregator(object):
 
 
 class Grouper(object):
-    def __init__(self, field, size=20, inner=None):
+    def __init__(self, field, size=20, inner=None, include=None, exclude=None):
         self._field = field
         self._size = size
-        self._outer = inner
+        self._inner = inner
+        self._include = include
+        self._exclude = exclude
 
     @staticmethod
     def from_list(l):
@@ -27,17 +29,26 @@ class Grouper(object):
         return Grouper(l[0], inner=Grouper.from_list(l[1:]))
 
     def build(self):
-        if self._outer is None:
-            return {self._field: {'terms': {'field': self._field, 'size': self._size}}}
-        else:
-            return {
-                self._field: {'terms': {'field': self._field, 'size': self._size},
-                              'aggregations': self._outer.build()}}
+        terms = {'field': self._field, 'size': self._size}
+        if self._exclude is not None:
+            assert isinstance(self._exclude, list)
+            terms['exclude'] = self._exclude
+        if self._include is not None:
+            assert isinstance(self._include, list)
+            terms['include'] = self._include
+
+        agg = {"terms": terms}
+
+        if self._inner is not None:
+            agg["aggregations"] = self._inner.build()
+
+        return {self._field: agg}
 
 
 class RangeGrouper(Grouper):
     def __init__(self, field, range_list):
         assert isinstance(range_list, list)
+        super(RangeGrouper, self).__init__(field)
         self._field = field
         self._range_list = range_list
 
@@ -56,14 +67,14 @@ class DateGrouper(Grouper):
     def __init__(self, field, interval, format):
         super(DateGrouper, self).__init__(field)
         self._field = field
-        self._intervel = interval
+        self._interval = interval
         self._format = format
 
     def build(self):
-        name = 'date({0},{1})'.format(self._field, self._intervel)
+        name = 'date({0},{1})'.format(self._field, self._interval)
         return {name: {'date_histogram': {
             'field': self._field,
-            'interval': self._intervel,
+            'interval': self._interval,
             'format': self._format,
         }}}
 
