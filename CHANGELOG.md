@@ -1,5 +1,6 @@
 ### 0.4.0
 
+* support filter function against ES version >= 5.0
 * support customized terms aggregation: `df.groupby(df.age.terms(limit=10, include=[1, 2, 3]))`
 
 ### 0.3.0

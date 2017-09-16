@@ -38,13 +38,13 @@ class DataFrame(object):
         self._index = list(self._mapping.keys())[0] if self._mapping else None
         self._doc_type = DataFrame._get_doc_type(self._mapping) if self._mapping else None
         self._columns = sorted(DataFrame._get_cols(self._mapping)) if self._mapping else None
-
         self._filter = kwargs.get('filter', None)
         self._groupby = kwargs.get('groupby', None)
         self._aggregation = kwargs.get('aggregation', None)
         self._sort = kwargs.get('sort', None)
         self._projection = kwargs.get('projection', None)
         self._limit = kwargs.get('limit', None)
+        self._compat = kwargs.get('compat', 2)
         self._last_query = None
 
     @property
@@ -448,7 +448,10 @@ class DataFrame(object):
                 query['size'] = 0
 
         if self._filter:
-            query['query'] = {'filtered': {'filter': self._filter}}
+            if self._compat == 5:
+                query['query'] = {'bool': {'filter': self._filter}}
+            else:
+                query['query'] = {'filtered': {'filter': self._filter}}
 
         if self._projection:
             query['_source'] = {"includes": [col.field_name() for col in self._projection], "excludes": []}

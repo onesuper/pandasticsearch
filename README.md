@@ -106,6 +106,13 @@ df.filter(ScriptFilter('2016 - doc["age"].value > 1995')).collect()
 # [Row(age=12,name='Alice'), Row(age=13,name='Leo')]
 ```
 
+**5.0 compatibility**: By default, pandasticsearch use `filtered` query (deprecated since 5.0). 
+To use pandasticsearch against the latest ES version, a `compat` arg can be passed to `from_es`:
+
+```
+df = DataFrame.from_es(url='http://localhost:9200', index='people', compat=5)
+```
+
 
 ### Aggregation
 ```python
