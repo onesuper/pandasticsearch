@@ -335,7 +335,6 @@ class DataFrame(object):
         [2, 1]
         """
         df = DataFrame(client=self._client,
-                       include_meta_fields=self._include_meta_fields,
                        mapping=self._mapping,
                        filter=self._filter,
                        groupby=self._groupby,
