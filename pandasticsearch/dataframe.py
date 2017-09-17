@@ -88,6 +88,7 @@ class DataFrame(object):
         :param str url: URL of the node connected to (default: 'http://localhost:9200')
         :param str index: The name of the index
         :param str doc_type: The type of the document
+        :param str compat: The compatible ES version (an integer number)
         :return: DataFrame object for accessing
         :rtype: DataFrame
 
@@ -98,6 +99,7 @@ class DataFrame(object):
         doc_type = kwargs.get('doc_type', None)
         index = kwargs.get('index', None)
         url = kwargs.get('url', 'http://localhost:9200')
+        compat = kwargs.get('compat', 2)
 
         if index is None:
             raise ValueError('Index name must be specified')
@@ -114,7 +116,7 @@ class DataFrame(object):
         else:
             endpoint = index + '/' + doc_type + '/_search'
         return DataFrame(client=RestClient(url, endpoint),
-                         mapping=mapping, index=index, doc_type=doc_type)
+                         mapping=mapping, index=index, doc_type=doc_type, compat=compat)
 
     def __getattr__(self, name):
         """
