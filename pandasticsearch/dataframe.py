@@ -157,7 +157,8 @@ class DataFrame(object):
                          aggregation=self._aggregation,
                          projection=self._projection,
                          sort=self._sort,
-                         limit=self._limit)
+                         limit=self._limit,
+                         compat=self._compat)
 
     where = filter
 
@@ -185,7 +186,8 @@ class DataFrame(object):
                          aggregation=self._aggregation,
                          projection=projection,
                          sort=self._sort,
-                         limit=self._limit)
+                         limit=self._limit,
+                         compat=self._compat)
 
     def limit(self, num):
         """
@@ -200,7 +202,8 @@ class DataFrame(object):
                          aggregation=self._aggregation,
                          projection=self._projection,
                          sort=self._sort,
-                         limit=num)
+                         limit=num,
+                         compat=self._compat)
 
     def groupby(self, *cols):
         """
@@ -232,7 +235,8 @@ class DataFrame(object):
                          aggregation=self._aggregation,
                          projection=self._projection,
                          sort=self._sort,
-                         limit=self.limit)
+                         limit=self.limit,
+                         compat=self._compat)
 
     def agg(self, *aggs):
         """
@@ -255,7 +259,8 @@ class DataFrame(object):
                          aggregation=aggregation,
                          projection=self._projection,
                          sort=self._sort,
-                         limit=self._limit)
+                         limit=self._limit,
+                         compat=self._compat)
 
     def sort(self, *cols):
         """
@@ -280,7 +285,8 @@ class DataFrame(object):
                          aggregation=self._aggregation,
                          projection=self._projection,
                          sort=sorts,
-                         limit=self._limit)
+                         limit=self._limit,
+                         compat=self._compat)
 
     orderby = sort
 
@@ -336,7 +342,8 @@ class DataFrame(object):
                        aggregation=MetricAggregator('_index', 'value_count').build(),
                        projection=self._projection,
                        sort=self._sort,
-                       limit=self._limit)
+                       limit=self._limit,
+                       compat=self._compat)
         cnt_row = df.collect()
         return list(map(lambda x: x['value_count(_index)'], cnt_row))
 
