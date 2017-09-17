@@ -338,13 +338,12 @@ class DataFrame(object):
                        mapping=self._mapping,
                        filter=self._filter,
                        groupby=self._groupby,
-                       aggregation=MetricAggregator('_index', 'value_count').build(),
+                       aggregation=MetricAggregator('_index', 'value_count', alias='count').build(),
                        projection=self._projection,
                        sort=self._sort,
                        limit=self._limit,
                        compat=self._compat)
-        cnt_row = df.collect()
-        return list(map(lambda x: x['value_count(_index)'], cnt_row))
+        return df
 
     def show(self, n=10000, truncate=15):
         """
