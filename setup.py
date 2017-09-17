@@ -9,7 +9,7 @@ extras_require = {
 
 setup(
     name='pandasticsearch',
-    version='0.4.1',
+    version='0.4.2',
     author='onesuper',
     author_email='onesuperclark@gmail.com',
     packages=['pandasticsearch'],
