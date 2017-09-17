@@ -95,26 +95,30 @@ class Scriptor(object):
 
 
 class MetricAggregator(Aggregator):
-    def __init__(self, field, agg_type, metric_rename=None, params=None):
+    def __init__(self, field, agg_type, alias=None, params=None):
         super(MetricAggregator, self).__init__(field)
-        self._type = agg_type
-        self._metric_rename = metric_rename
+        self._agg_type = agg_type
+        self._alias = alias
         self._params = params
 
+    def alias(self, alias):
+        self._alias = alias
+        return self
+
     def build(self):
-        if self._type not in _metric_aggs:
+        if self._agg_type not in _metric_aggs:
             raise Exception('Not support metric aggregator: {0}'.format(self._type))
 
-        if self._metric_rename is None:
-            name = '{0}({1})'.format(self._type, self._field)
+        if self._alias is None:
+            name = '{0}({1})'.format(self._agg_type, self._field)
         else:
-            name = self._metric_rename
+            name = self._alias
 
         agg_field = dict()
         agg_field['field'] = self._field
         if self._params is not None:
             agg_field.update(self._params)
-        return {name: {self._type: agg_field}}
+        return {name: {self._agg_type: agg_field}}
 
 
 class Sorter(object):

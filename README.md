@@ -120,6 +120,10 @@ df = DataFrame.from_es(url='http://localhost:9200', index='people', compat=5)
 df[df.gender == 'male'].agg(df.age.avg).collect()
 # [Row(avg(age)=12)]
 
+# Metric alias
+df[df.gender == 'male'].agg(df.age.avg.alias('avg_age')).collect()
+# [Row(avg_age=12)]
+
 # Groupby only (will give the `doc_count`)
 df.groupby('gender').collect()
 # [Row(doc_count=1), Row(doc_count=2)]

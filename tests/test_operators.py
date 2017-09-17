@@ -8,6 +8,7 @@ class TestOperators(unittest.TestCase):
     def test_metric_agg(self):
         self.assertEqual(MetricAggregator('x', 'avg').build(), {'avg(x)': {'avg': {'field': 'x'}}})
         self.assertEqual(MetricAggregator('x', 'max').build(), {'max(x)': {'max': {'field': 'x'}}})
+        self.assertEqual(MetricAggregator('x', 'max').alias('max_x').build(), {'max_x': {'max': {'field': 'x'}}})
 
     def test_grouper(self):
         grouper = Grouper('a', size=100, include=['x', 'y'])
