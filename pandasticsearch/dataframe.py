@@ -100,7 +100,8 @@ class DataFrame(object):
         index = kwargs.get('index', None)
         url = kwargs.get('url', 'http://localhost:9200')
         compat = kwargs.get('compat', 2)
-
+        limit = kwargs.get('limit', None)
+        
         if index is None:
             raise ValueError('Index name must be specified')
         # get mapping structure from server
@@ -116,7 +117,7 @@ class DataFrame(object):
         else:
             endpoint = index + '/' + doc_type + '/_search'
         return DataFrame(client=RestClient(url, endpoint),
-                         mapping=mapping, index=index, doc_type=doc_type, compat=compat)
+                         mapping=mapping, index=index, doc_type=doc_type, compat=compat, limit=limit)
 
     def __getattr__(self, name):
         """
