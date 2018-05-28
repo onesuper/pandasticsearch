@@ -10,7 +10,7 @@ from pandasticsearch.operators import *
 def create_df_from_es(mock_urlopen):
     response = Mock()
     dic = {"index": {"mappings": {"doc_type": {"properties": {"a": {"type": "integer"},
-                                                          "b": {"type": "integer"}}}}}}
+                                                              "b": {"type": "integer"}}}}}}
     response.read.return_value = json.dumps(dic).encode("utf-8")
     mock_urlopen.return_value = response
     return DataFrame.from_es(url="http://localhost:9200", index='xxx')
@@ -77,6 +77,13 @@ class TestDataFrame(unittest.TestCase):
         self.assertEqual((df.sort(Sorter('a'), Sorter('b'))).to_dict(),
                          {'sort': [{'a': {'order': 'desc'}},
                                    {'b': {'order': 'desc'}}], 'size': 20})
+
+        self.assertEqual((df.sort('doc["age"].value * 2')).to_dict(),
+                         {'sort': [{'_script': {
+                             'order': 'desc',
+                             'script': 'doc["age"].value * 2',
+                             'type': 'number'
+                         }}], 'size': 20})
 
     def test_select(self):
         df = create_df_from_es()

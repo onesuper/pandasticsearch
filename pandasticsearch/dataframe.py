@@ -274,8 +274,12 @@ class DataFrame(object):
         """
         sorts = []
         for col in cols:
-            assert isinstance(col, Sorter)
-            sorts.append(col.build())
+            if isinstance(col, six.string_types):
+                sorts.append(ScriptSorter(col).build())
+            elif isinstance(col, Sorter):
+                sorts.append(col.build())
+            else:
+                raise TypeError('{0} is supposed to be str or Sorter'.format(col))
 
         return DataFrame(client=self._client,
                          mapping=self._mapping,
