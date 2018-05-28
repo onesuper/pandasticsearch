@@ -44,9 +44,16 @@ class TestDataFrame(unittest.TestCase):
         df = create_df_from_es()
 
         self.assertEqual((df.filter(df['a'] > 2)).to_dict(),
-                         {'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}}, 'size': 20})
+                         {'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}},
+                          'size': 20})
         self.assertEqual(df.where(Greater('a', 2)).to_dict(),
-                         {'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}}, 'size': 20})
+                         {'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}},
+                          'size': 20})
+
+        self.assertEqual(df.filter('2016 - doc["age"].value > 1995').to_dict(),
+                         {'query': {'filtered': {
+                             'filter': {'script': {'script': {'inline': '2016 - doc["age"].value > 1995'}}}}},
+                          'size': 20})
 
     def test_groupby(self):
         df = create_df_from_es()

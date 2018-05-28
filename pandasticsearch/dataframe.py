@@ -146,15 +146,22 @@ class DataFrame(object):
 
         where() is an alias for filter().
 
-        :param condition: :class:`BooleanFilter <pandasticsearch.operators.BooleanFilter>` object
+        :param condition: :class:`BooleanFilter <pandasticsearch.operators.BooleanFilter>` object or a string
 
         >>> df.filter(df['age'] < 13).collect()
         [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
         """
-        assert isinstance(condition, BooleanFilter)
+
+        if isinstance(condition, six.string_types):
+            filters = ScriptFilter(condition)
+        elif isinstance(condition, BooleanFilter):
+            filters = condition
+        else:
+            raise TypeError('{0} is supposed to be str or BooleanFilter'.format(condition))
+
         return DataFrame(client=self._client,
                          mapping=self._mapping,
-                         filter=condition.build(),
+                         filter=filters.build(),
                          groupby=self._groupby,
                          aggregation=self._aggregation,
                          projection=self._projection,
