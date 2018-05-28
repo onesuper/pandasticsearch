@@ -101,8 +101,7 @@ df.filter(df.name.startswith('Al')).collect()
 # [Row(age=12,gender='female',name='Alice')]
 
 # Filter by a script
-from pandasticsearch.operators import ScriptFilter
-df.filter(ScriptFilter('2016 - doc["age"].value > 1995')).collect()
+df.filter('2016 - doc["age"].value > 1995').collect()
 # [Row(age=12,name='Alice'), Row(age=13,name='Leo')]
 ```
 

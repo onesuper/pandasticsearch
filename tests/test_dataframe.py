@@ -10,7 +10,7 @@ from pandasticsearch.operators import *
 def create_df_from_es(mock_urlopen):
     response = Mock()
     dic = {"index": {"mappings": {"doc_type": {"properties": {"a": {"type": "integer"},
-                                                          "b": {"type": "integer"}}}}}}
+                                                              "b": {"type": "integer"}}}}}}
     response.read.return_value = json.dumps(dic).encode("utf-8")
     mock_urlopen.return_value = response
     return DataFrame.from_es(url="http://localhost:9200", index='xxx')
@@ -44,9 +44,16 @@ class TestDataFrame(unittest.TestCase):
         df = create_df_from_es()
 
         self.assertEqual((df.filter(df['a'] > 2)).to_dict(),
-                         {'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}}, 'size': 20})
+                         {'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}},
+                          'size': 20})
         self.assertEqual(df.where(Greater('a', 2)).to_dict(),
-                         {'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}}, 'size': 20})
+                         {'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}},
+                          'size': 20})
+
+        self.assertEqual(df.filter('2016 - doc["age"].value > 1995').to_dict(),
+                         {'query': {'filtered': {
+                             'filter': {'script': {'script': {'inline': '2016 - doc["age"].value > 1995'}}}}},
+                          'size': 20})
 
     def test_groupby(self):
         df = create_df_from_es()
