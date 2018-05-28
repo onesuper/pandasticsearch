@@ -13,6 +13,8 @@ import copy
 
 _unbound_index_err = DataFrameException('DataFrame is not bound to ES index')
 
+_count_aggregator = MetricAggregator('_index', 'value_count', alias='count').build()
+
 
 class DataFrame(object):
     """
@@ -212,10 +214,7 @@ class DataFrame(object):
         :param cols: A list of column names, :class:`Column <pandasticsearch.types.Column>` or :class:`Grouper <pandasticsearch.operators.Grouper>` objects
         """
         columns = []
-
-        if len(cols) == 1 and isinstance(cols[0], RangeGrouper):
-            groupby = cols[0].build()
-        elif len(cols) == 1 and isinstance(cols[0], Grouper):
+        if len(cols) == 1 and isinstance(cols[0], Grouper):
             groupby = cols[0].build()
         else:
             for col in cols:
@@ -338,7 +337,7 @@ class DataFrame(object):
                        mapping=self._mapping,
                        filter=self._filter,
                        groupby=self._groupby,
-                       aggregation=MetricAggregator('_index', 'value_count', alias='count').build(),
+                       aggregation=_count_aggregator,
                        projection=self._projection,
                        sort=self._sort,
                        limit=self._limit,
