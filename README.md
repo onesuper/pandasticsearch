@@ -84,9 +84,14 @@ df[df.gender == 'male'].agg(df.age.avg).to_dict()
 df.filter(df.age < 13).collect()
 # [Row(age=12,gender='female',name='Alice'), Row(age=11,gender='male',name='Bob')]
 
-# Filter by a set of boolean conditions
-df.filter(df.age < 13 & df.gender == 'male').collect()
+# Filter by a set of boolean conditions (by &)
+df.filter((df.age < 13) & (df.gender == 'male')).collect()
 # Row(age=11,gender='male',name='Bob')]
+
+# Filter by a set of boolean conditions (by chaining)
+df.filter(df.age < 13).filter(df.gender == 'male').collect()
+# Row(age=11,gender='male',name='Bob')]
+
 
 # Filter by a wildcard (sql `like`)
 df.filter(df.name.like('A*')).collect()

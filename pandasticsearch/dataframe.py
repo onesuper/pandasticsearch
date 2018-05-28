@@ -153,15 +153,19 @@ class DataFrame(object):
         """
 
         if isinstance(condition, six.string_types):
-            filters = ScriptFilter(condition)
+            _filter = ScriptFilter(condition)
         elif isinstance(condition, BooleanFilter):
-            filters = condition
+            _filter = condition
         else:
             raise TypeError('{0} is supposed to be str or BooleanFilter'.format(condition))
 
+        # chaining filter treated as AND
+        if self._filter is not None:
+            _filter = (self._filter & _filter)
+
         return DataFrame(client=self._client,
                          mapping=self._mapping,
-                         filter=filters.build(),
+                         filter=_filter,
                          groupby=self._groupby,
                          aggregation=self._aggregation,
                          projection=self._projection,
@@ -465,10 +469,11 @@ class DataFrame(object):
                 query['size'] = 0
 
         if self._filter:
+            assert isinstance(self._filter, BooleanFilter)
             if self._compat == 5:
-                query['query'] = {'bool': {'filter': self._filter}}
+                query['query'] = {'bool': {'filter': self._filter.build()}}
             else:
-                query['query'] = {'filtered': {'filter': self._filter}}
+                query['query'] = {'filtered': {'filter': self._filter.build()}}
 
         if self._projection:
             query['_source'] = {"includes": [col.field_name() for col in self._projection], "excludes": []}
