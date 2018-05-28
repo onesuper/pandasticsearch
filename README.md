@@ -92,7 +92,6 @@ df.filter((df.age < 13) & (df.gender == 'male')).collect()
 df.filter(df.age < 13).filter(df.gender == 'male').collect()
 # Row(age=11,gender='male',name='Bob')]
 
-
 # Filter by a wildcard (sql `like`)
 df.filter(df.name.like('A*')).collect()
 # [Row(age=12,gender='female',name='Alice')]
