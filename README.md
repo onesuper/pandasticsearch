@@ -156,8 +156,7 @@ df.sort(df.age.asc).select('name', 'age').collect()
 # [Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
 
 # Sort by a script
-from pandasticsearch.operators import ScriptSorter
-df.sort(ScriptSorter('doc["age"].value * 2')).collect()
+df.sort('doc["age"].value * 2').collect()
 # [Row(age=11,name='Bob'), Row(age=12,name='Alice'), Row(age=13,name='Leo')]
 ```
 

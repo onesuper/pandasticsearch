@@ -21,13 +21,14 @@ class Sorter(object):
 
 
 class ScriptSorter(object):
-    def __init__(self, script, order='desc', params=None):
+    def __init__(self, script, order='desc', type='number', params=None):
         self._order = order
         self._script = script
         self._params = params
+        self._type = type
 
     def build(self):
-        script = {'script': self._script, 'type': 'number', 'order': self._order}
+        script = {'script': self._script, 'type': self._type, 'order': self._order}
         if self._params:
             script['params'] = self._params
         return {'_script': script}
