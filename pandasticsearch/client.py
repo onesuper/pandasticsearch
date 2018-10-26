@@ -2,6 +2,8 @@
 
 import json
 import sys
+import base64
+import ssl
 from six.moves import urllib
 
 from pandasticsearch.errors import ServerDefinedException
@@ -12,7 +14,7 @@ class RestClient(object):
     RestClient talks to Elasticsearch cluster through native RESTful API.
     """
 
-    def __init__(self, url, endpoint=''):
+    def __init__(self, url, endpoint='', username=None, password=None, verify_ssl=True):
         """
         Initialize the RESTful from the keyword arguments.
 
@@ -21,6 +23,9 @@ class RestClient(object):
         """
         self.url = url
         self.endpoint = endpoint
+        self.username = username
+        self.password = password
+        self.verify_ssl = verify_ssl
 
     def _prepare_url(self):
         if self.url.endswith('/'):
@@ -42,12 +47,25 @@ class RestClient(object):
         """
         try:
             url = self._prepare_url()
+            username = self.username
+            password = self.password
+            verify_ssl = self.verify_ssl
 
             if params is not None:
                 url = '{0}?{1}'.format(url, urllib.parse.urlencode(params))
 
             req = urllib.request.Request(url=url)
-            res = urllib.request.urlopen(req)
+
+            if username is not None and password is not None:
+                base64creds = base64.b64encode('%s:%s' % (username,password))
+                req.add_header("Authorization", "Basic %s" % base64creds)
+            
+            if verify_ssl is False:
+                context = ssl._create_unverified_context()
+                res = urllib.request.urlopen(req, context=context)
+            else:
+                res = urllib.request.urlopen(req)
+
             data = res.read().decode("utf-8")
             res.close()
         except urllib.error.HTTPError:
@@ -79,13 +97,26 @@ class RestClient(object):
         """
         try:
             url = self._prepare_url()
+            username = self.username
+            password = self.password
+            verify_ssl = self.verify_ssl
 
             if params is not None:
                 url = '{0}?{1}'.format(url, urllib.parse.urlencode(params))
 
             req = urllib.request.Request(url=url, data=json.dumps(data).encode('utf-8'),
                                          headers={'Content-Type': 'application/json'})
-            res = urllib.request.urlopen(req)
+
+            if username is not None and password is not None:
+                base64creds = base64.b64encode('%s:%s' % (username,password))
+                req.add_header("Authorization", "Basic %s" % base64creds)
+            
+            if verify_ssl is False:
+                context = ssl._create_unverified_context()
+                res = urllib.request.urlopen(req, context=context)
+            else:
+                res = urllib.request.urlopen(req)
+
             data = res.read().decode("utf-8")
             res.close()
         except urllib.error.HTTPError:
