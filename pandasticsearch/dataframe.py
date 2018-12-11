@@ -102,6 +102,9 @@ class DataFrame(object):
         index = kwargs.get('index', None)
         url = kwargs.get('url', 'http://localhost:9200')
         compat = kwargs.get('compat', 2)
+        username = kwargs.get('username', None)
+        password = kwargs.get('password', None)
+        verify_ssl = kwargs.get('verify_ssl', True)
 
         if index is None:
             raise ValueError('Index name must be specified')
@@ -111,13 +114,13 @@ class DataFrame(object):
         else:
             mapping_endpoint = index + '/_mapping/' + doc_type
 
-        mapping = RestClient(url, mapping_endpoint).get()
+        mapping = RestClient(url, mapping_endpoint, username, password, verify_ssl).get()
 
         if doc_type is None:
             endpoint = index + '/_search'
         else:
             endpoint = index + '/' + doc_type + '/_search'
-        return DataFrame(client=RestClient(url, endpoint),
+        return DataFrame(client=RestClient(url, endpoint, username, password, verify_ssl),
                          mapping=mapping, index=index, doc_type=doc_type, compat=compat)
 
     def __getattr__(self, name):
