@@ -11,15 +11,13 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(MetricAggregator('x', 'max').alias('max_x').build(), {'max_x': {'max': {'field': 'x'}}})
 
     def test_grouper(self):
-        grouper = Grouper('a', size=100, include=['x', 'y'])
-        print(grouper.build())
-        self.assertEqual(grouper.build(),
+        exp = Grouper('a', size=100, include=['x', 'y'])
+        self.assertEqual(exp.build(),
                          {'a': {'terms': {'field': 'a', 'size': 100, 'include': ['x', 'y']}}})
 
     def test_nested_grouper(self):
-        nested_grouper = Grouper('a', inner=Grouper('b', inner=Grouper('c')))
-        print(nested_grouper.build())
-        self.assertEqual(nested_grouper.build(),
+        exp = Grouper('a', inner=Grouper('b', inner=Grouper('c')))
+        self.assertEqual(exp.build(),
                          {
                              'a': {
                                  'terms': {'field': 'a', 'size': 20},
@@ -30,15 +28,13 @@ class TestOperators(unittest.TestCase):
                                              'c': {'terms': {'field': 'c', 'size': 20}}}}}}})
 
     def test_range_grouper(self):
-        range_grouper = RangeGrouper('a', [1, 3, 6])
-        print(range_grouper.build())
-        self.assertEqual(range_grouper.build(), {
+        exp = RangeGrouper('a', [1, 3, 6])
+        self.assertEqual(exp.build(), {
             'range(1,3,6)': {'range': {'ranges': [{'to': 3, 'from': 1}, {'to': 6, 'from': 3}], 'field': 'a'}}})
 
     def test_date_grouper(self):
-        g = DateGrouper('a', '1d', 'm')
-        print(g.build())
-        self.assertEqual(g.build(), {
+        exp = DateGrouper('a', '1d', 'm')
+        self.assertEqual(exp.build(), {
             'date(a,1d)': {'date_histogram': {'interval': '1d', 'field': 'a', 'format': 'm'}}})
 
     def test_sorter(self):
@@ -73,110 +69,173 @@ class TestOperators(unittest.TestCase):
                                  'inline': 'doc["num1"].value > params.param1',
                                  'params': {'param1': 5}}}})
 
-    def test_and_filter(self):
+    def test_and_filter1(self):
+        exp = GreaterEqual('a', 2) & Less('b', 3)
         self.assertEqual(
-            (GreaterEqual('a', 2) & Less('b', 3)).build()['bool'],
+            exp.build(),
             {
-                'must': [
-                    {'range': {'a': {'gte': 2}}},
-                    {'range': {'b': {'lt': 3}}}]
+                'bool': {
+                    'must': [
+                        {'range': {'a': {'gte': 2}}},
+                        {'range': {'b': {'lt': 3}}}
+                    ]
+                }
             })
 
+    def test_and_filter2(self):
+        exp = GreaterEqual('a', 2) & Less('b', 3) & Equal('c', 4)
         self.assertEqual(
-            (GreaterEqual('a', 2) & Less('b', 3) & Equal('c', 4)).build()['bool'],
+            exp.build(),
             {
-                'must': [
-                    {'range': {'a': {'gte': 2}}},
-                    {'range': {'b': {'lt': 3}}},
-                    {'term': {'c': 4}}]
+                'bool': {
+                    'must': [
+                        {'range': {'a': {'gte': 2}}},
+                        {'range': {'b': {'lt': 3}}},
+                        {'term': {'c': 4}}
+                    ]
+                }
             })
 
+    def test_and_filter3(self):
+        exp = GreaterEqual('a', 2) & (Less('b', 3) & Equal('c', 4))
         self.assertEqual(
-            (GreaterEqual('a', 2) & (Less('b', 3) & Equal('c', 4))).build()['bool'],
+            exp.build(),
             {
-                'must': [
-                    {'range': {'b': {'lt': 3}}},
-                    {'term': {'c': 4}},
-                    {'range': {'a': {'gte': 2}}}]
+                'bool': {
+                    'must': [
+                        {'range': {'b': {'lt': 3}}},
+                        {'term': {'c': 4}},
+                        {'range': {'a': {'gte': 2}}}
+                    ]
+                }
             })
 
-    def test_or_filter(self):
+    def test_or_filter1(self):
+        exp = GreaterEqual('a', 2) | Less('b', 3)
         self.assertEqual(
-            (GreaterEqual('a', 2) | Less('b', 3)).build()['bool'],
+            exp.build(),
             {
-                'should': [
-                    {'range': {'a': {'gte': 2}}},
-                    {'range': {'b': {'lt': 3}}}]
+                'bool': {
+                    'should': [
+                        {'range': {'a': {'gte': 2}}},
+                        {'range': {'b': {'lt': 3}}}
+                    ]
+                }
             })
 
+    def test_or_filter2(self):
+        exp = GreaterEqual('a', 2) | Less('b', 3) | Equal('c', 4)
         self.assertEqual(
-            (GreaterEqual('a', 2) | Less('b', 3) | Equal('c', 4)).build()['bool'],
+            exp.build(),
             {
-                'should': [
-                    {'range': {'a': {'gte': 2}}},
-                    {'range': {'b': {'lt': 3}}},
-                    {'term': {'c': 4}}]
+                'bool': {
+                    'should': [
+                        {'range': {'a': {'gte': 2}}},
+                        {'range': {'b': {'lt': 3}}},
+                        {'term': {'c': 4}}
+                    ]
+                }
             })
 
+    def test_or_filter3(self):
+        exp = GreaterEqual('a', 2) | (Less('b', 3) | Equal('c', 4))
         self.assertEqual(
-            (GreaterEqual('a', 2) | (Less('b', 3) | Equal('c', 4))).build()['bool'],
+            exp.build(),
             {
-                'should': [
-                    {'range': {'b': {'lt': 3}}},
-                    {'term': {'c': 4}},
-                    {'range': {'a': {'gte': 2}}}]
+                'bool': {
+                    'should': [
+                        {'range': {'b': {'lt': 3}}},
+                        {'term': {'c': 4}},
+                        {'range': {'a': {'gte': 2}}}
+                    ]
+                }
             })
 
     def test_not_filter(self):
+        exp = ~GreaterEqual('a', 2)
         self.assertEqual(
-            (~GreaterEqual('a', 2)).build()['bool'],
+            exp.build(),
             {
-                'must_not':
-                    {'range': {'a': {'gte': 2}}}})
+                'bool': {
+                    'must_not': {'range': {'a': {'gte': 2}}}
+                }
+            })
 
     def test_not_not_filter(self):
-        exp = GreaterEqual('a', 2)
-        print((~exp).build())
-        print((~~exp).build())
+        exp = ~~GreaterEqual('a', 2)
+
         self.assertEqual(
-            (~~exp).build()['bool'],
+            exp.build(),
             {
-                'must_not': {
-                    'bool': {
-                        'must_not':
-                            {'range': {'a': {'gte': 2}}}}}})
+                'bool': {
+                    'must_not': {
+                        'bool': {
+                            'must_not': {'range': {'a': {'gte': 2}}}
+                        }
+                    }
+                }
+            })
 
     def test_not_and_filter(self):
-        exp = GreaterEqual('a', 2) & Less('b', 3)
+        exp = ~(GreaterEqual('a', 2) & Less('b', 3))
         self.assertEqual(
-            (~exp).build()['bool'],
+            exp.build(),
             {
-                'must_not': {
-                    'bool': {
-                        'must': [
-                            {'range': {'a': {'gte': 2}}},
-                            {'range': {'b': {'lt': 3}}}]
+                'bool': {
+                    'must_not': {
+                        'bool': {
+                            'must': [
+                                {'range': {'a': {'gte': 2}}},
+                                {'range': {'b': {'lt': 3}}}
+                            ]
+                        }
                     }
                 }
             })
 
     def test_and_or_filter(self):
-        exp = Less('b', 3) | Equal('c', 4)
-        actual = GreaterEqual('a', 2) & exp
-
+        exp = GreaterEqual('a', 2) & (Less('b', 3) | Equal('c', 4))
         self.assertEqual(
-            actual.build()['bool'],
+            exp.build(),
             {
-                'must': [
-                    {'range': {'a': {'gte': 2}}},
-                    {
-                        'bool': {
-                            'should': [
-                                {'range': {'b': {'lt': 3}}},
-                                {'term': {'c': 4}}
-                            ]
+                'bool': {
+                    'must': [
+                        {'range': {'a': {'gte': 2}}},
+                        {
+                            'bool': {
+                                'should': [
+                                    {'range': {'b': {'lt': 3}}},
+                                    {'term': {'c': 4}}
+                                ]
+                            }
                         }
-                    }]
+                    ]
+                }
+            })
+
+    def test_and_not_or_filter(self):
+        exp = GreaterEqual('a', 2) & ~(Less('b', 3) | Equal('c', 4))
+        self.assertEqual(
+            exp.build(),
+            {
+                'bool': {
+                    'must': [
+                        {'range': {'a': {'gte': 2}}},
+                        {
+                            'bool': {
+                                'must_not': {
+                                    'bool': {
+                                        'should': [
+                                            {'range': {'b': {'lt': 3}}},
+                                            {'term': {'c': 4}}
+                                        ]
+                                    }
+
+                                }
+                            }
+                        }
+                    ]
+                }
             })
 
 
