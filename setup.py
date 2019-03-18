@@ -12,7 +12,7 @@ setup(
     version='0.5.0',
     author='onesuper',
     author_email='onesuperclark@gmail.com',
-    packages=['pandasticsearch'],
+    packages=['pandasticsearch', 'pandasticsearch.operators'],
     url='http://pypi.python.org/pypi/pandasticsearch/',
     license='MIT',
     description='A Pandastic Elasticsearch client for data analyzing.',
