@@ -165,7 +165,7 @@ class Agg(Query):
         self._indexes = []
         for t in tuples:
             _, index, row = t
-            self.append(row)
+            self._values.append(row)
             if len(index) > 0:
                 self._indexes.append(index)
 
