@@ -434,10 +434,18 @@ class DataFrame(object):
 
         sys.stdout.write('{0}\n'.format(self._index))
         index = list(self._mapping.values())[0]  # {'index': {}}
-        for typ, properties in six.iteritems(index['mappings']):
-            sys.stdout.write('|--{0}\n'.format(typ))
-            for k, v in six.iteritems(properties['properties']):
-                sys.stdout.write('  |--{0}: {1}\n'.format(k, v))
+        schema = self.resolve_schema(index['mappings']['properties'])
+        sys.stdout.write(schema)
+
+    def resolve_schema(self, json_prop, res_schema="", depth=1):
+        for field in json_prop:
+            if "properties" in json_prop[field]:
+                res_schema += f"{'  '*depth}|--{field}:\n"
+                res_schema = self.resolve_schema(json_prop[field]["properties"],
+                                                 res_schema, depth=depth+1)
+            else:
+                res_schema += f"{'  ' * depth}|--{field}: {json_prop[field]}\n"
+        return res_schema
 
     def _build_query(self):
         query = dict()
@@ -488,15 +496,30 @@ class DataFrame(object):
 
     @classmethod
     def _get_cols(cls, mapping):
-        cols = []
-        index = list(mapping.values())[0]  # {'index': {}}
-        for _, properties in six.iteritems(index['mappings']):
-            for k, _ in six.iteritems(properties['properties']):
-                cols.append(k)
+        index = list(mapping.keys())[0]
+        cols = cls.get_mappings(mapping, index)
 
         if len(cols) == 0:
             raise Exception('0 columns found in mapping')
         return cols
+
+    @classmethod
+    def resolve_mappings(cls, json_map):
+        prop = []
+        for field in json_map:
+            nested_props = []
+            if "properties" in json_map[field]:
+                nested_props = cls.resolve_mappings(json_map[field]["properties"])
+            if len(nested_props) == 0:
+                prop.append(field)
+            else:
+                for nested_prop in nested_props:
+                    prop.append(f"{field}.{nested_prop}")
+        return prop
+
+    @classmethod
+    def get_mappings(cls, json_map, index_name):
+        return cls.resolve_mappings(json_map[index_name]["mappings"]["properties"])
 
     @classmethod
     def _get_doc_type(cls, mapping):

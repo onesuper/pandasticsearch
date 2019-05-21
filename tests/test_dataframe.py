@@ -9,8 +9,30 @@ from pandasticsearch.operators import *
 @patch('pandasticsearch.client.urllib.request.urlopen')
 def create_df_from_es(mock_urlopen):
     response = Mock()
-    dic = {"index": {"mappings": {"doc_type": {"properties": {"a": {"type": "integer"},
-                                                              "b": {"type": "integer"}}}}}}
+    dic = {
+      "metricbeat-7.0.0-qa": {
+        "mappings": {
+          "_meta": {
+            "beat": "metricbeat",
+            "version": "7.0.0"
+          },
+          "date_detection": False,
+          "properties": {
+            "a": {
+              "type": "integer"
+            },
+            "b": {
+              "type": "integer"
+            },
+            "c": {"properties": {
+                "d": {"type": "keyword", "ignore_above": 1024},
+                "e": {"type": "keyword", "ignore_above": 1024}
+              }
+            }
+          }
+        }
+      }
+    }
     response.read.return_value = json.dumps(dic).encode("utf-8")
     mock_urlopen.return_value = response
     return DataFrame.from_es(url="http://localhost:9200", index='xxx')
@@ -34,7 +56,7 @@ class TestDataFrame(unittest.TestCase):
 
     def test_columns(self):
         df = create_df_from_es()
-        self.assertEqual(df.columns, ['a', 'b'])
+        self.assertEqual(df.columns, ['a', 'b', 'c.d', 'c.e'])
 
     def test_init(self):
         df = create_df_from_es()
