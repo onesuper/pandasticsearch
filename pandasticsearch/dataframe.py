@@ -138,7 +138,7 @@ class DataFrame(object):
                 raise TypeError('Column does not exist: [{0}]'.format(item))
             return Column(item)
         elif isinstance(item, BooleanFilter):
-            self._filter = item.build()
+            self._filter = item
             return self
         else:
             raise TypeError('Unsupported expr: [{0}]'.format(item))
