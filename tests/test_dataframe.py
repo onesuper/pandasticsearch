@@ -47,7 +47,7 @@ class TestDataFrame(unittest.TestCase):
         expr = df['a'] > 2
         self.assertTrue(isinstance(expr, BooleanFilter))
         self.assertTrue(isinstance(df[expr], DataFrame))
-        self.assertEqual(df[expr]._filter, {'range': {'a': {'gt': 2}}})
+        self.assertEqual(df[expr]._filter.build(), {'range': {'a': {'gt': 2}}})
 
     def test_getattr(self):
         df = create_df_from_es()
