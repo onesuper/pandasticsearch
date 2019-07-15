@@ -10,32 +10,59 @@ from pandasticsearch.operators import *
 def create_df_from_es(mock_urlopen):
     response = Mock()
     dic = {
-      "metricbeat-7.0.0-qa": {
-        "mappings": {
-          "_meta": {
-            "beat": "metricbeat",
-            "version": "7.0.0"
-          },
-          "date_detection": False,
-          "properties": {
-            "a": {
-              "type": "integer"
-            },
-            "b": {
-              "type": "integer"
-            },
-            "c": {"properties": {
-                "d": {"type": "keyword", "ignore_above": 1024},
-                "e": {"type": "keyword", "ignore_above": 1024}
-              }
+        "index": {
+            "mappings": {
+                "doc_type": {
+                    "properties": {
+                        "a": {
+                            "type": "integer"
+                        },
+                        "b": {
+                            "type": "integer"
+                        },
+                        "c": {"properties": {
+                            "d": {"type": "keyword", "ignore_above": 1024},
+                            "e": {"type": "keyword", "ignore_above": 1024}
+                        }
+                        }
+                    }
+                }
             }
-          }
         }
-      }
     }
     response.read.return_value = json.dumps(dic).encode("utf-8")
     mock_urlopen.return_value = response
-    return DataFrame.from_es(url="http://localhost:9200", index='xxx')
+    return DataFrame.from_es(url="http://localhost:9200", index='index', doc_type='doc_type')
+
+
+@patch('pandasticsearch.client.urllib.request.urlopen')
+def create_df_from_es_after_removal_mapping(mock_urlopen):
+    """
+    https://www.elastic.co/guide/en/elasticsearch/reference/current/removal-of-types.html
+    """
+    response = Mock()
+    dic = {
+        "index": {
+            "mappings": {
+                "properties": {
+                    "a": {
+                        "type": "integer"
+                    },
+                    "b": {
+                        "type": "integer"
+                    },
+                    "c": {"properties": {
+                        "d": {"type": "keyword", "ignore_above": 1024},
+                        "e": {"type": "keyword", "ignore_above": 1024}
+                    }
+                    }
+                }
+            }
+        }
+    }
+    response.read.return_value = json.dumps(dic).encode("utf-8")
+    mock_urlopen.return_value = response
+    return DataFrame.from_es(url="http://localhost:9200", index='index', compat=7)
 
 
 class TestDataFrame(unittest.TestCase):
@@ -54,8 +81,20 @@ class TestDataFrame(unittest.TestCase):
         self.assertTrue(isinstance(df.a, Column))
         self.assertTrue(isinstance(df.b, Column))
 
+    def test_index(self):
+        df = create_df_from_es()
+        self.assertEqual(df.index, 'index/doc_type')
+
+    def test_index_after_removal_mapping(self):
+        df = create_df_from_es_after_removal_mapping()
+        self.assertEqual(df.index, 'index')
+
     def test_columns(self):
         df = create_df_from_es()
+        self.assertEqual(df.columns, ['a', 'b', 'c.d', 'c.e'])
+
+    def test_columns_after_removal_mapping(self):
+        df = create_df_from_es_after_removal_mapping()
         self.assertEqual(df.columns, ['a', 'b', 'c.d', 'c.e'])
 
     def test_init(self):
