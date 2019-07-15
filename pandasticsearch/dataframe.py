@@ -37,16 +37,15 @@ class DataFrame(object):
     def __init__(self, **kwargs):
         self._client = kwargs.get('client', None)
         self._mapping = kwargs.get('mapping', None)
-        self._index = list(self._mapping.keys())[0] if self._mapping else None
-        self._doc_type = DataFrame._get_doc_type(self._mapping) if self._mapping else None
-        self._columns = sorted(DataFrame._get_cols(self._mapping)) if self._mapping else None
+        self._doc_type = kwargs.get('doc_type', None)
+        self._index = kwargs.get('index', None)
+        self._compat = kwargs.get('compat', 2)
         self._filter = kwargs.get('filter', None)
         self._groupby = kwargs.get('groupby', None)
         self._aggregation = kwargs.get('aggregation', None)
         self._sort = kwargs.get('sort', None)
         self._projection = kwargs.get('projection', None)
         self._limit = kwargs.get('limit', None)
-        self._compat = kwargs.get('compat', 2)
         self._last_query = None
 
     @property
@@ -73,7 +72,7 @@ class DataFrame(object):
         >>> df.columns
         ['age', 'name']
         """
-        return self._columns
+        return sorted(self._get_cols(self._mapping)) if self._mapping else None
 
     @property
     def schema(self):
@@ -108,13 +107,8 @@ class DataFrame(object):
 
         if index is None:
             raise ValueError('Index name must be specified')
-        # get mapping structure from server
-        if doc_type is None:
-            mapping_endpoint = index
-        else:
-            mapping_endpoint = index + '/_mapping/' + doc_type
 
-        mapping = RestClient(url, mapping_endpoint, username, password, verify_ssl).get()
+        mapping = RestClient(url, index, username, password, verify_ssl).get()
 
         if doc_type is None:
             endpoint = index + '/_search'
@@ -167,6 +161,8 @@ class DataFrame(object):
             _filter = (self._filter & _filter)
 
         return DataFrame(client=self._client,
+                         index=self._index,
+                         doc_type=self._doc_type,
                          mapping=self._mapping,
                          filter=_filter,
                          groupby=self._groupby,
@@ -196,6 +192,8 @@ class DataFrame(object):
             else:
                 raise TypeError('{0} is supposed to be str or Column'.format(col))
         return DataFrame(client=self._client,
+                         index=self._index,
+                         doc_type=self._doc_type,
                          mapping=self._mapping,
                          filter=self._filter,
                          groupby=self._groupby,
@@ -212,6 +210,8 @@ class DataFrame(object):
         assert isinstance(num, int)
         assert num >= 1
         return DataFrame(client=self._client,
+                         index=self._index,
+                         doc_type=self._doc_type,
                          mapping=self._mapping,
                          filter=self._filter,
                          groupby=self._groupby,
@@ -242,6 +242,8 @@ class DataFrame(object):
             groupby = Grouper.from_list(names).build()
 
         return DataFrame(client=self._client,
+                         index=self._index,
+                         doc_type=self._doc_type,
                          mapping=self._mapping,
                          filter=self._filter,
                          groupby=groupby,
@@ -266,6 +268,8 @@ class DataFrame(object):
             aggregation.update(agg.build())
 
         return DataFrame(client=self._client,
+                         index=self._index,
+                         doc_type=self._doc_type,
                          mapping=self._mapping,
                          filter=self._filter,
                          groupby=self._groupby,
@@ -296,6 +300,8 @@ class DataFrame(object):
                 raise TypeError('{0} is supposed to be str or Sorter'.format(col))
 
         return DataFrame(client=self._client,
+                         index=self._index,
+                         doc_type=self._doc_type,
                          mapping=self._mapping,
                          filter=self._filter,
                          groupby=self._groupby,
@@ -352,6 +358,8 @@ class DataFrame(object):
         [2, 1]
         """
         df = DataFrame(client=self._client,
+                       index=self._index,
+                       doc_type=self._doc_type,
                        mapping=self._mapping,
                        filter=self._filter,
                        groupby=self._groupby,
@@ -494,10 +502,9 @@ class DataFrame(object):
         self._last_query = query
         return query
 
-    @classmethod
-    def _get_cols(cls, mapping):
+    def _get_cols(self, mapping):
         index = list(mapping.keys())[0]
-        cols = cls.get_mappings(mapping, index)
+        cols = self._get_mappings(mapping, index)
 
         if len(cols) == 0:
             raise Exception('0 columns found in mapping')
@@ -517,14 +524,11 @@ class DataFrame(object):
                     prop.append("{}.{}".format(field, nested_prop))
         return prop
 
-    @classmethod
-    def get_mappings(cls, json_map, index_name):
-        return cls.resolve_mappings(json_map[index_name]["mappings"]["properties"])
-
-    @classmethod
-    def _get_doc_type(cls, mapping):
-        index = list(mapping.values())[0]  # {'index': {}}
-        if len(index['mappings'].keys()) == 1:
-            return list(index['mappings'].keys())[0]
+    def _get_mappings(self, json_map, index_name):
+        if self._compat >= 7:
+            return DataFrame.resolve_mappings(json_map[index_name]["mappings"]["properties"])
         else:
-            return None
+            if self._doc_type is not None:
+                return DataFrame.resolve_mappings(json_map[index_name]["mappings"][self._doc_type]["properties"])
+            else:
+                raise Exception('Please specify mapping for ES version under 7')
