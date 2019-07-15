@@ -489,7 +489,7 @@ class DataFrame(object):
 
         if self._filter:
             assert isinstance(self._filter, BooleanFilter)
-            if self._compat == 5:
+            if self._compat >= 5:
                 query['query'] = {'bool': {'filter': self._filter.build()}}
             else:
                 query['query'] = {'filtered': {'filter': self._filter.build()}}
