@@ -507,7 +507,7 @@ class DataFrame(object):
         cols = self._get_mappings(mapping, index)
 
         if len(cols) == 0:
-            raise Exception('0 columns found in mapping')
+            raise DataFrameException('0 columns found in mapping')
         return cols
 
     @classmethod
@@ -531,4 +531,4 @@ class DataFrame(object):
             if self._doc_type is not None:
                 return DataFrame.resolve_mappings(json_map[index_name]["mappings"][self._doc_type]["properties"])
             else:
-                raise Exception('Please specify mapping for ES version under 7')
+                raise DataFrameException('Please specify mapping for ES version under 7')
