@@ -440,11 +440,11 @@ class DataFrame(object):
     def resolve_schema(self, json_prop, res_schema="", depth=1):
         for field in json_prop:
             if "properties" in json_prop[field]:
-                res_schema += f"{'  '*depth}|--{field}:\n"
+                res_schema += "{}|--{}:\n".format('  ' * depth, field)
                 res_schema = self.resolve_schema(json_prop[field]["properties"],
                                                  res_schema, depth=depth+1)
             else:
-                res_schema += f"{'  ' * depth}|--{field}: {json_prop[field]}\n"
+                res_schema += "{}|--{}: {}\n".format('  ' * depth, field, json_prop[field])
         return res_schema
 
     def _build_query(self):
