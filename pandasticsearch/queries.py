@@ -74,6 +74,18 @@ class Select(Query):
     def __init__(self):
         super(Select, self).__init__()
 
+    def resolve_fields(self, row):
+        fields = {}
+        for field in row:
+            nested_fields = {}
+            if isinstance(row[field], dict):
+                nested_fields = self.resolve_fields(row[field])
+                for n_field, val in nested_fields.items():
+                    fields[f"{field}.{n_field}"] = val
+            else:
+                fields[field] = row[field]
+        return fields
+
     def explain_result(self, result=None):
         super(Select, self).explain_result(result)
         rows = []
@@ -81,7 +93,8 @@ class Select(Query):
             row = {}
             for k in hit.keys():
                 if k == '_source':
-                    row.update(hit['_source'])
+                    solved_fields = self.resolve_fields(hit['_source'])
+                    row.update(solved_fields)
                 elif k.startswith('_'):
                     row[k] = hit[k]
             rows.append(row)
