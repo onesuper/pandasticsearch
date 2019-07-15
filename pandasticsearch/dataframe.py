@@ -514,7 +514,7 @@ class DataFrame(object):
                 prop.append(field)
             else:
                 for nested_prop in nested_props:
-                    prop.append(f"{field}.{nested_prop}")
+                    prop.append("{}.{}".format(field, nested_prop))
         return prop
 
     @classmethod

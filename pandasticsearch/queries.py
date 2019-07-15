@@ -81,7 +81,7 @@ class Select(Query):
             if isinstance(row[field], dict):
                 nested_fields = self.resolve_fields(row[field])
                 for n_field, val in nested_fields.items():
-                    fields[f"{field}.{n_field}"] = val
+                    fields["{}.{}".format(field, n_field)] = val
             else:
                 fields[field] = row[field]
         return fields
