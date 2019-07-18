@@ -441,9 +441,16 @@ class DataFrame(object):
             return
 
         sys.stdout.write('{0}\n'.format(self._index))
-        index = list(self._mapping.values())[0]  # {'index': {}}
-        schema = self.resolve_schema(index['mappings']['properties'])
-        sys.stdout.write(schema)
+        index_name = list(self._mapping.keys())[0]
+        if self._compat >= 7:
+            json_obj = self._mapping[index_name]["mappings"]["properties"]
+            sys.stdout.write(self.resolve_schema(json_obj))
+        else:
+            if self._doc_type is not None:
+                json_obj = self._mapping[index_name]["mappings"][self._doc_type]["properties"]
+                sys.stdout.write(self.resolve_schema(json_obj))
+            else:
+                raise DataFrameException('Please specify mapping for ES version under 7')
 
     def resolve_schema(self, json_prop, res_schema="", depth=1):
         for field in json_prop:

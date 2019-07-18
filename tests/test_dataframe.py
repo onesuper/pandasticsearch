@@ -93,9 +93,17 @@ class TestDataFrame(unittest.TestCase):
         df = create_df_from_es()
         self.assertEqual(df.columns, ['a', 'b', 'c.d', 'c.e'])
 
+    def test_print_schema(self):
+        df = create_df_from_es()
+        df.print_schema()
+
     def test_columns_after_removal_mapping(self):
         df = create_df_from_es_after_removal_mapping()
         self.assertEqual(df.columns, ['a', 'b', 'c.d', 'c.e'])
+
+    def test_print_schema_after_removal_mapping(self):
+        df = create_df_from_es_after_removal_mapping()
+        df.print_schema()
 
     def test_init(self):
         df = create_df_from_es()
