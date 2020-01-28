@@ -96,6 +96,23 @@ class TestOperators(unittest.TestCase):
                 }
             })
 
+    def test_and_filter2a(self):
+        exp = GreaterEqual('a', 2) & Less('b', 3) & (Equal('c', 4) & Equal('d', 5))
+        self.assertEqual(
+            exp.build(),
+            {
+                'bool': {
+                    'must': [
+                        {'range': {'a': {'gte': 2}}},
+                        {'range': {'b': {'lt': 3}}},
+                        {'bool': {'must': [
+                            {'term': {'c': 4}},
+                            {'term': {'d': 5}},
+                        ]}},
+                    ]
+                }
+            })
+
     def test_and_filter3(self):
         exp = GreaterEqual('a', 2) & (Less('b', 3) & Equal('c', 4))
         self.assertEqual(
@@ -133,6 +150,23 @@ class TestOperators(unittest.TestCase):
                         {'range': {'a': {'gte': 2}}},
                         {'range': {'b': {'lt': 3}}},
                         {'term': {'c': 4}}
+                    ]
+                }
+            })
+
+    def test_or_filter2a(self):
+        exp = GreaterEqual('a', 2) | Less('b', 3) | (Equal('c', 4) & Equal('d', 5))
+        self.assertEqual(
+            exp.build(),
+            {
+                'bool': {
+                    'should': [
+                        {'range': {'a': {'gte': 2}}},
+                        {'range': {'b': {'lt': 3}}},
+                        {'bool': {'must': [
+                            {'term': {'c': 4}},
+                            {'term': {'d': 5}},
+                        ]}},
                     ]
                 }
             })

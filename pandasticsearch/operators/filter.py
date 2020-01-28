@@ -9,7 +9,7 @@ class BooleanFilter(object):
     def __and__(self, x):
         # Combine results
         if isinstance(self, AndFilter):
-            self.subtree['must'].append(x.subtree)
+            self.subtree['must'].append(x.build())
             return self
         elif isinstance(x, AndFilter):
             x.subtree['must'].append(self.subtree)
@@ -19,7 +19,7 @@ class BooleanFilter(object):
     def __or__(self, x):
         # Combine results
         if isinstance(self, OrFilter):
-            self.subtree['should'].append(x.subtree)
+            self.subtree['should'].append(x.build())
             return self
         elif isinstance(x, OrFilter):
             x.subtree['should'].append(self.subtree)
