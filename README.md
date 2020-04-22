@@ -211,7 +211,7 @@ df = DataFrame.from_es(url='http://localhost:9200', index='people', compat=7)
 
 ## Related Articles
 
-* [Spark and Elasticsearch for real-time data analysis](https://spark-summit.org/2015-east/wp-content/uploads/2015/03/SSE15-35-Leau.pdf)
+* [Spark and Elasticsearch for real-time data analysis](https://web.archive.org/web/20150911151523/https://spark-summit.org/2015-east/wp-content/uploads/2015/03/SSE15-35-Leau.pdf)
 
 
 ## LICENSE
