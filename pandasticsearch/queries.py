@@ -1,13 +1,16 @@
 # -*- coding: UTF-8 -*-
 
-import collections
+try:
+    from collections.abc import MutableSequence
+except ImportError:
+    from collections import MutableSequence
 import json
 import six
 
 from pandasticsearch.errors import NoSuchDependencyException
 
 
-class Query(collections.MutableSequence):
+class Query(MutableSequence):
     def __init__(self):
         super(Query, self).__init__()
         self._values = None
