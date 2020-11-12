@@ -14,7 +14,7 @@ class TestClients(unittest.TestCase):
 
         client = RestClient("http://localhost:9200")
 
-        json = client.post(data="xxxx")
+        json = client.post('/test/_search', data="xxxx")
 
         print(json)
         self.assertIsNotNone(json)

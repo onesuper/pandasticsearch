@@ -14,39 +14,41 @@ class RestClient(object):
     RestClient talks to Elasticsearch cluster through native RESTful API.
     """
 
-    def __init__(self, url, endpoint='', username=None, password=None, verify_ssl=True):
+    def __init__(self, host, username=None, password=None, verify_ssl=True):
         """
         Initialize the RESTful from the keyword arguments.
 
-        :param str url: URL of Broker node in the Elasticsearch cluster
-        :param str endpoint: Endpoint that Broker listens for queries on
+        :param str host: Host URL of Broker node in the Elasticsearch cluster
         """
-        self.url = url
-        self.endpoint = endpoint
+        self.host = host
         self.username = username
         self.password = password
         self.verify_ssl = verify_ssl
 
-    def _prepare_url(self):
-        if self.url.endswith('/'):
-            url = self.url + self.endpoint
+    def _prepare_url(self, path):
+        if self.host.endswith('/'):
+            url = self.host + path
         else:
-            url = self.url + '/' + self.endpoint
+            if path.startswith('/'):
+                url = self.host + path
+            else:
+                url = self.host + '/' + path
         return url
 
-    def get(self, params=None):
+    def get(self, path, params=None):
         """
         Sends a GET request to Elasticsearch.
 
+        :param path: path: path of the verb and resource, e.g. /index
         :param optional params: Dictionary to be sent in the query string.
         :return: The response as a dictionary.
 
         >>> from pandasticsearch import RestClient
-        >>> client = RestClient('http://localhost:9200', '_mapping/index')
+        >>> client = RestClient('http://localhost:9200')
         >>> print(client.get())
         """
         try:
-            url = self._prepare_url()
+            url = self._prepare_url(path)
             username = self.username
             password = self.password
             verify_ssl = self.verify_ssl
@@ -57,7 +59,8 @@ class RestClient(object):
             req = urllib.request.Request(url=url)
 
             if username is not None and password is not None:
-                base64creds = base64.b64encode('%s:%s' % (username,password))
+                s = '%s:%s' % (username, password)
+                base64creds = base64.b64encode(s.encode('utf-8')).decode('utf-8')
                 req.add_header("Authorization", "Basic %s" % base64creds)
             
             if verify_ssl is False:
@@ -83,20 +86,21 @@ class RestClient(object):
         else:
             return json.loads(data)
 
-    def post(self, data, params=None):
+    def post(self, path, data, params=None):
         """
         Sends a POST request to Elasticsearch.
 
+        :param path: The path for the verb and resource
         :param data: The json data to send in the body of the request.
         :param optional params: Dictionary to be sent in the query string.
         :return: The response as a dictionary.
 
         >>> from pandasticsearch import RestClient
-        >>> client = RestClient('http://localhost:9200', 'index/type/_search')
-        >>> print(client.post(data={"query":{"match_all":{}}}))
+        >>> client = RestClient('http://localhost:9200')
+        >>> print(client.post(path='/index/_search', data={"query":{"match_all":{}}}))
         """
         try:
-            url = self._prepare_url()
+            url = self._prepare_url(path)
             username = self.username
             password = self.password
             verify_ssl = self.verify_ssl
@@ -108,7 +112,8 @@ class RestClient(object):
                                          headers={'Content-Type': 'application/json'})
 
             if username is not None and password is not None:
-                base64creds = base64.b64encode('%s:%s' % (username,password))
+                s = '%s:%s' % (username, password)
+                base64creds = base64.b64encode(s.encode('utf-8')).decode('utf-8')
                 req.add_header("Authorization", "Basic %s" % base64creds)
             
             if verify_ssl is False:
