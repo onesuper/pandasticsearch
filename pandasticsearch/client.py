@@ -19,6 +19,9 @@ class RestClient(object):
         Initialize the RESTful from the keyword arguments.
 
         :param str host: Host URL of Broker node in the Elasticsearch cluster
+        :param str optional username: Username for authentication
+        :param str optional password: Password for authentication
+        :param bool optional verify_ssl: Whether or not verify the SSL certificate
         """
         self.host = host
         self.username = username
@@ -39,13 +42,13 @@ class RestClient(object):
         """
         Sends a GET request to Elasticsearch.
 
-        :param path: path: path of the verb and resource, e.g. /index
+        :param path: Path of the verb and resource
         :param optional params: Dictionary to be sent in the query string.
         :return: The response as a dictionary.
 
         >>> from pandasticsearch import RestClient
-        >>> client = RestClient('http://localhost:9200')
-        >>> print(client.get())
+        >>> client = RestClient('http://host:port')
+        >>> print(client.get('index_name/_search'))
         """
         try:
             url = self._prepare_url(path)
@@ -86,27 +89,23 @@ class RestClient(object):
         else:
             return json.loads(data)
 
-    def post(self, path, data, params=None):
+    def post(self, path, data):
         """
         Sends a POST request to Elasticsearch.
 
-        :param path: The path for the verb and resource
+        :param path: The path of the verb and resource, e.g. "/index_name/_search"
         :param data: The json data to send in the body of the request.
-        :param optional params: Dictionary to be sent in the query string.
         :return: The response as a dictionary.
 
         >>> from pandasticsearch import RestClient
-        >>> client = RestClient('http://localhost:9200')
-        >>> print(client.post(path='/index/_search', data={"query":{"match_all":{}}}))
+        >>> client = RestClient('http://host:port')
+        >>> print(client.post(path='index/_search', data={"query":{"match_all":{}}}))
         """
         try:
             url = self._prepare_url(path)
             username = self.username
             password = self.password
             verify_ssl = self.verify_ssl
-
-            if params is not None:
-                url = '{0}?{1}'.format(url, urllib.parse.urlencode(params))
 
             req = urllib.request.Request(url=url, data=json.dumps(data).encode('utf-8'),
                                          headers={'Content-Type': 'application/json'})

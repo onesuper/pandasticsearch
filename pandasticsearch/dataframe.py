@@ -21,7 +21,7 @@ class DataFrame(object):
     A :class:`DataFrame` treats index and documents in Elasticsearch as named columns and rows.
 
     >>> from pandasticsearch import DataFrame
-    >>> df = DataFrame.from_es('http://localhost:9200', index='people')
+    >>> df = DataFrame.from_es('http://host:port', index='people')
 
     Customizing the endpoint of the ElasticSearch:
 
@@ -94,7 +94,7 @@ class DataFrame(object):
         :rtype: DataFrame
 
         >>> from pandasticsearch import DataFrame
-        >>> df = DataFrame.from_es('http://localhost:9200', index='people')
+        >>> df = DataFrame.from_es('http://host:port', index='people')
         """
 
         doc_type = kwargs.get('doc_type', None)
