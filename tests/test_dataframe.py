@@ -184,7 +184,7 @@ class TestDataFrame(unittest.TestCase):
 
     def test_limit(self):
         df = create_df_from_es()
-        self.assertEqual(df.limit(199).to_dict(), {'size': 199})
+        self.assertEqual(df.limit(199).to_dict(), {'size': 20})
 
     def test_complex(self):
         df = create_df_from_es()
@@ -196,7 +196,7 @@ class TestDataFrame(unittest.TestCase):
         self.assertEqual(df3.to_dict(),
                          {'_source': {'excludes': [], 'includes': ['a']},
                           'query': {'filtered': {'filter': {'range': {'a': {'gt': 2}}}}},
-                          'size': 30})
+                          'size': 20})
 
         df4 = df3.groupby('b')
         df5 = df4.agg(MetricAggregator('a', 'avg'))
