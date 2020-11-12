@@ -14,12 +14,11 @@ class Query(MutableSequence):
     def __init__(self):
         super(Query, self).__init__()
         self._values = None
-        self._result_dict = None
-        self._took_millis = None
+        self._result_dict = {}
+        self._took_millis = 0
 
     def explain_result(self, result=None):
-        if result is not None:
-            assert isinstance(result, dict)
+        if isinstance(result, dict):
             self._result_dict = result
             self._took_millis = self._result_dict['took']
 
@@ -89,19 +88,20 @@ class Select(Query):
                 fields[field] = row[field]
         return fields
 
+    def hit_to_row(self, hit):
+        row = {}
+        for k in hit.keys():
+            if k == '_source':
+                solved_fields = self.resolve_fields(hit['_source'])
+                row.update(solved_fields)
+            elif k.startswith('_'):
+                row[k] = hit[k]
+        return row
+
     def explain_result(self, result=None):
         super(Select, self).explain_result(result)
-        rows = []
-        for hit in self._result_dict['hits']['hits']:
-            row = {}
-            for k in hit.keys():
-                if k == '_source':
-                    solved_fields = self.resolve_fields(hit['_source'])
-                    row.update(solved_fields)
-                elif k.startswith('_'):
-                    row[k] = hit[k]
-            rows.append(row)
-        self._values = rows
+        self._values = [self.hit_to_row(hit)
+                        for hit in self._result_dict['hits']['hits']]
 
     def to_pandas(self):
         try:
@@ -133,9 +133,10 @@ class Select(Query):
         tavnit = '|'
         separator = '+'
 
+        cached_result = [kv for kv in self.result[:n]]
         for col in cols:
             maxlen = len(col)
-            for kv in self.result[:n]:
+            for kv in cached_result:
                 if col in kv:
                     s = Select._stringfy_value(kv[col])
                 else:
@@ -151,7 +152,7 @@ class Select(Query):
         b.write(separator + '\n')
         b.write(tavnit % tuple(cols) + '\n')
         b.write(separator + '\n')
-        for kv in self.result[:n]:
+        for kv in cached_result:
             row = []
             for col in cols:
                 if col in kv:
@@ -164,6 +165,38 @@ class Select(Query):
             b.write(tavnit % tuple(row) + '\n')
         b.write(separator + '\n')
         return b.getvalue()
+
+
+class ScrollSelect(Select):
+    """
+    millis_taken/json not supported for ScrollSelect
+    """
+    def __init__(self, hits_generator):
+        super(ScrollSelect, self).__init__()
+        self.hits_generator = hits_generator
+
+    @property
+    def result(self):
+        return [r for r in self.row_generator()]
+
+    def __str__(self):
+        return str(self.result)
+
+    def __len__(self):
+        return len(self.result)
+
+    def row_generator(self):
+        for hit in self.hits_generator():
+            yield self.hit_to_row(hit)
+
+    def to_pandas(self):
+        try:
+            import pandas
+        except ImportError:
+            raise NoSuchDependencyException('this method requires pandas library')
+
+        df = pandas.DataFrame(self.row_generator())
+        return df
 
 
 class Agg(Query):

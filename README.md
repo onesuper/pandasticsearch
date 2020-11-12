@@ -32,7 +32,7 @@ It is type-safe, easy-to-use and Pandas-flavored.
 ```python
 # Create a DataFrame object
 from pandasticsearch import DataFrame
-df = DataFrame.from_es(url='http://localhost:9200', index='people', doc_type='mapping_name')
+df = DataFrame.from_es(url='http://localhost:9200', index='people', username='abc', password='abc')
 
 # Print the schema(mapping) of the index
 df.print_schema()
@@ -71,11 +71,24 @@ df[df.gender == 'male'].agg(df.age.avg).to_pandas()
 #    avg(age)
 # 0        12
 
+
+# Dump all your dataset to Pandas DataFrame in memory for subsequent analysis
+df.to_pandas()
+# ...
+
+# Limit your data amount, if your dataset is too large
+df.limit(1000).to_pandas()
+# ...
+
+
 # Translate the DataFrame to an ES query (dictionary)
 df[df.gender == 'male'].agg(df.age.avg).to_dict()
 # {'query': {'filtered': {'filter': {'term': {'gender': 'male'}}}}, 'aggregations': {'avg(birthYear)':
 # {'avg': {'field': 'birthYear'}}}, 'size': 0}
+
 ```
+
+
 
 ### Filter
 

@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 from pandasticsearch.client import RestClient
-from pandasticsearch.queries import Agg, Select
+from pandasticsearch.queries import Agg, ScrollSelect
 from pandasticsearch.operators import *
 from pandasticsearch.types import Column, Row
 from pandasticsearch.errors import DataFrameException
@@ -27,7 +27,7 @@ class DataFrame(object):
 
     >>> from pandasticsearch import DataFrame
     >>> from pandasticsearch.client import RestClient
-    >>> df = DataFrame(client=RestClient('http://host:port/v2/_search',), index='people')
+    >>> df = DataFrame(client=RestClient('http://host:port',), index='people')
 
     It can be converted to Pandas object for subsequent analysis:
 
@@ -45,7 +45,7 @@ class DataFrame(object):
         self._aggregation = kwargs.get('aggregation', None)
         self._sort = kwargs.get('sort', None)
         self._projection = kwargs.get('projection', None)
-        self._limit = kwargs.get('limit', None)
+        self._limit = kwargs.get('limit', 100)
         self._last_query = None
 
     @property
@@ -108,14 +108,16 @@ class DataFrame(object):
         if index is None:
             raise ValueError('Index name must be specified')
 
-        mapping = RestClient(url, index, username, password, verify_ssl).get()
-
         if doc_type is None:
-            endpoint = index + '/_search'
+            path = index
         else:
-            endpoint = index + '/' + doc_type + '/_search'
-        return DataFrame(client=RestClient(url, endpoint, username, password, verify_ssl),
-                         mapping=mapping, index=index, doc_type=doc_type, compat=compat)
+            path = index + '/' + doc_type
+
+        client = RestClient(url, username, password, verify_ssl)
+
+        mapping = client.get(path)
+
+        return DataFrame(client=client, mapping=mapping, index=index, doc_type=doc_type, compat=compat)
 
     def __getattr__(self, name):
         """
@@ -317,11 +319,43 @@ class DataFrame(object):
         if self._client is None:
             raise _unbound_index_err
 
-        if self._aggregation is None and self._groupby is None:
-            res_dict = self._client.post(data=self._build_query())
-            return Select.from_dict(res_dict)
+        if self._doc_type is None:
+            path = self._index + '/_search'
         else:
-            res_dict = self._client.post(data=self._build_query())
+            path = self._index + '/' + self._doc_type + '/_search'
+
+        if self._aggregation is None and self._groupby is None:
+
+            def _scroll():
+                row_counter = 0
+
+                _query = self._build_query()
+                resp = self._client.post(path, params={"scroll": "10s"}, data=_query)
+                scroll_id = resp.get("_scroll_id")
+                try:
+                    while scroll_id and resp["hits"]["hits"]:
+                        if row_counter >= self._limit:
+                            break
+
+                        for hit in resp["hits"]["hits"]:
+
+                            if row_counter >= self._limit:
+                                break
+
+                            row_counter += 1
+                            yield hit
+
+                        resp = self._client.get('_search/scroll',
+                                                params={"scroll_id": scroll_id, "scroll": "10s"})
+                        scroll_id = resp.get("_scroll_id")
+
+                finally:
+                    # TODO(onesuper): Delete the scroll resource anyway
+                    pass
+            return ScrollSelect(_scroll)
+
+        else:
+            res_dict = self._client.post(path, data=self._build_query())
             return Agg.from_dict(res_dict)
 
     def collect(self):
@@ -369,7 +403,7 @@ class DataFrame(object):
                        compat=self._compat)
         return df
 
-    def show(self, n=10000, truncate=15):
+    def show(self, n=200, truncate=15):
         """
         Prints the first ``n`` rows to the console.
 
@@ -401,7 +435,6 @@ class DataFrame(object):
             raise _unbound_index_err
 
         sys.stdout.write(query.result_as_tabular(cols, n, truncate))
-        sys.stdout.write('time: {0}ms\n'.format(query.millis_taken))
 
     def __repr__(self):
         if self.columns is None:
@@ -464,10 +497,7 @@ class DataFrame(object):
     def _build_query(self):
         query = dict()
 
-        if self._limit:
-            query['size'] = self._limit
-        else:
-            query['size'] = 20
+        query['size'] = 20  # batch size for scroll search
 
         if self._groupby and not self._aggregation:
             query['aggregations'] = self._groupby

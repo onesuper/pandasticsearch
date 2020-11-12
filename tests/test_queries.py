@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import unittest
 
-from pandasticsearch.queries import Select, Agg
+from pandasticsearch.queries import Select, Agg, ScrollSelect
 
 
 def create_hits():
@@ -15,6 +15,12 @@ def create_hits():
         },
         'took': 1
     }
+
+
+def mock_hits_generator():
+    yield {'_source': {'a': 1, 'b': 1}}
+    yield {'_source': {'a': 2, 'b': 2}}
+    yield {'_source': {'a': 3, 'b': 3}}
 
 
 class TestQueries(unittest.TestCase):
@@ -34,6 +40,13 @@ class TestQueries(unittest.TestCase):
         print(repr(select))
 
         self.assertIsNotNone(select.result)
+        self.assertEqual(len(select), 3)
+
+    def test_scroll_select(self):
+        select = ScrollSelect(mock_hits_generator)
+        print(select)
+        print(repr(select))
+        self.assertEquals(select.result[:2], select.result[:2])
         self.assertEqual(len(select), 3)
 
     def test_select_result(self):
