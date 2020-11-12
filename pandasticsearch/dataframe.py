@@ -317,13 +317,12 @@ class DataFrame(object):
         if self._client is None:
             raise _unbound_index_err
 
-        res_dict = self._client.post(data=self._build_query())
         if self._aggregation is None and self._groupby is None:
-            query = Select()
-            query.explain_result(res_dict)
+            res_dict = self._client.post(data=self._build_query())
+            return Select.from_dict(res_dict)
         else:
-            query = Agg.from_dict(res_dict)
-        return query
+            res_dict = self._client.post(data=self._build_query())
+            return Agg.from_dict(res_dict)
 
     def collect(self):
         """
