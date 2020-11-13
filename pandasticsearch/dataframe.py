@@ -539,8 +539,7 @@ class DataFrame(object):
         return query
 
     def _get_cols(self, mapping):
-        index = list(mapping.keys())[0]
-        cols = self._get_mappings(mapping, index)
+        cols = self._get_mappings(mapping)
 
         if len(cols) == 0:
             raise DataFrameException('0 columns found in mapping')
@@ -560,7 +559,9 @@ class DataFrame(object):
                     prop.append("{}.{}".format(field, nested_prop))
         return prop
 
-    def _get_mappings(self, json_map, index_name):
+    def _get_mappings(self, json_map):
+        index_name = list(self._mapping.keys())[0]
+
         if self._compat >= 7:
             return DataFrame.resolve_mappings(json_map[index_name]["mappings"]["properties"])
         else:
