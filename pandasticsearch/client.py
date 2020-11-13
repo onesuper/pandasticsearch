@@ -89,12 +89,13 @@ class RestClient(object):
         else:
             return json.loads(data)
 
-    def post(self, path, data):
+    def post(self, path, data, params=None):
         """
         Sends a POST request to Elasticsearch.
 
         :param path: The path of the verb and resource, e.g. "/index_name/_search"
         :param data: The json data to send in the body of the request.
+        :param optional params: Dictionary to be sent in the query string.
         :return: The response as a dictionary.
 
         >>> from pandasticsearch import RestClient
@@ -106,6 +107,9 @@ class RestClient(object):
             username = self.username
             password = self.password
             verify_ssl = self.verify_ssl
+
+            if params is not None:
+                url = '{0}?{1}'.format(url, urllib.parse.urlencode(params))
 
             req = urllib.request.Request(url=url, data=json.dumps(data).encode('utf-8'),
                                          headers={'Content-Type': 'application/json'})
