@@ -119,9 +119,13 @@ class Startswith(BooleanFilter):
 
 
 class IsNull(BooleanFilter):
+    """
+    .. _Find documents missing indexed values
+        https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-exists-query.html
+    """
     def __init__(self, field):
         super(IsNull, self).__init__()
-        self._filter = {'missing': {'field': field}}
+        self._filter = {'bool': {'must_not': {'exists': {'field': field}}}}
 
 
 class NotNull(BooleanFilter):
