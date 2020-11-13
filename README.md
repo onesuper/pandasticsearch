@@ -137,9 +137,13 @@ df[df.gender == 'male'].agg(df.age.avg.alias('avg_age')).collect()
 df.groupby('gender').collect()
 # [Row(doc_count=1), Row(doc_count=2)]
 
-# Groupby and then aggregate
+# Groupby and then aggregate metric
 df.groupby('gender').agg(df.age.max).collect()
 # [Row(doc_count=1, max(age)=12), Row(doc_count=2, max(age)=13)]
+
+# Groupby and then aggregate multiple metrics(max and value_count)
+df.groupby('gender').agg(df.age.value_count, df.age.max,).collect()
+# [Row(value_count(age)=1, max(age)=12), Row(value_count(age)=2, max(age)=13)]
 
 # Group by a set of ranges
 df.groupby(df.age.ranges([10,12,14])).to_pandas()
