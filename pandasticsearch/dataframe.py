@@ -345,8 +345,8 @@ class DataFrame(object):
                             row_counter += 1
                             yield hit
 
-                        resp = self._client.get('_search/scroll',
-                                                params={"scroll_id": scroll_id, "scroll": "10s"})
+                        resp = self._client.post('_search/scroll',
+                                                data={"scroll_id": scroll_id, "scroll": "10s"})
                         scroll_id = resp.get("_scroll_id")
 
                 finally:
