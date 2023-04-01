@@ -251,8 +251,11 @@ class Agg(Query):
 
                         if 'key_as_string' in sub_bucket:
                             key = sub_bucket['key_as_string']
-                        else:
+                        elif 'key' in sub_bucket:
                             key = sub_bucket['key']
+                        else:
+                            key = sub_bucket
+                            sub_bucket = v['buckets'][sub_bucket]
                         for x in Agg._process_agg(sub_bucket,
                                                   indexes + (key,),
                                                   names + (k,)):
